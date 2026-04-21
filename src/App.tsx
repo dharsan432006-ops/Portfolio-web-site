@@ -19,194 +19,179 @@ import {
 } from 'lucide-react';
 import { PROJECTS, SKILLS, EXPERIENCE, EDUCATION, ACHIEVEMENTS } from './constants';
 
-const BentoCard = ({ children, className = '', title, icon: Icon }: { children: React.ReactNode, className?: string, title?: string, icon?: any }) => (
-  <motion.div 
-    initial={{ opacity: 0, scale: 0.95 }}
-    whileInView={{ opacity: 1, scale: 1 }}
-    viewport={{ once: true }}
-    className={`bento-card ${className}`}
-  >
-    {title && (
-      <div className="card-title-bento">
-        {Icon && <Icon size={14} className="text-accent" />}
-        <span>{title}</span>
-      </div>
-    )}
-    {children}
-  </motion.div>
+const Navbar = () => (
+  <nav className="absolute top-0 left-0 right-0 z-50 py-8">
+    <div className="max-w-7xl mx-auto px-6">
+      <a href="#" className="text-sm font-bold tracking-widest text-white uppercase opacity-80 hover:opacity-100 transition-opacity">
+        Sudarshan
+      </a>
+    </div>
+  </nav>
 );
 
-const Navbar = () => {
-  const [isOpen, setIsOpen] = useState(false);
-  const [scrolled, setScrolled] = useState(false);
+const Hero = () => (
+  <div className="relative min-h-[90vh] flex flex-col items-center justify-center text-center px-6 aurora-container">
+    <div className="aurora-bg animate-pulse" />
+    <motion.h1 
+      initial={{ opacity: 0, scale: 0.9 }}
+      animate={{ opacity: 1, scale: 1 }}
+      className="text-[12vw] md:text-[8rem] font-bold text-white tracking-tighter leading-none mb-4"
+    >
+      SUDARSHAN
+    </motion.h1>
+    <motion.p 
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: 0.2 }}
+      className="text-lg md:text-xl text-white/70 font-medium tracking-wide mb-8"
+    >
+      "Aspiring Software Developer | Problem Solver"
+    </motion.p>
+    <motion.div 
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: 0.4 }}
+      className="flex gap-4"
+    >
+      <a href="#projects" className="btn-primary">View Projects</a>
+      <a href="#contact" className="btn-secondary">Contact Me</a>
+    </motion.div>
+  </div>
+);
 
-  useEffect(() => {
-    const handleScroll = () => setScrolled(window.scrollY > 50);
-    window.addEventListener('scroll', handleScroll);
-    return () => removeEventListener('scroll', handleScroll);
-  }, []);
-
-  const navLinks = [
-    { name: 'Portfolio', href: '#' },
-    { name: 'Projects', href: '#' },
-    { name: 'Experience', href: '#' },
-    { name: 'Contact', href: '#' },
-  ];
-
+const About = () => {
+  const allSkills = [...SKILLS.languages, ...SKILLS.technologies, ...SKILLS.tools].map(s => s.name);
   return (
-    <nav className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${scrolled ? 'bg-surface/80 backdrop-blur-md py-4 border-b border-border-dim' : 'bg-transparent py-6'}`}>
-      <div className="max-w-[1200px] mx-auto px-6 flex justify-between items-center">
-        <a href="#" className="text-xl font-display font-bold">
-          Sudarshan<span className="text-accent">.</span>
-        </a>
+    <section id="about" className="py-24 bg-surface relative z-10">
+      <div className="max-w-4xl mx-auto px-6">
+        <h2 className="text-xl font-bold text-white mb-8">About</h2>
+        <div className="grid md:grid-cols-[1.5fr_1fr] gap-8">
+          <div className="glass-card p-8">
+            <p className="text-gray-400 leading-relaxed text-sm">
+              I am a passionate B.Tech Computer Science student at Anna University, 
+              deeply interested in the intersection of algorithms, software engineering, 
+              and artificial intelligence. As a Python developer at heart, I love tackling 
+              complex problems and turning them into elegant pieces of code.
+            </p>
+          </div>
+          <div className="glass-card p-8 flex flex-wrap gap-2 h-fit">
+            {allSkills.slice(0, 10).map(skill => (
+              <span key={skill} className="tag">{skill}</span>
+            ))}
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+};
 
-        <div className="hidden md:flex items-center space-x-8">
-          {navLinks.map((link) => (
-            <a key={link.name} href={link.href} className="text-xs font-mono uppercase tracking-widest text-text-dim hover:text-white transition-colors">
-              {link.name}
-            </a>
+const Projects = () => {
+  return (
+    <section id="projects" className="py-24 bg-surface text-center">
+      <div className="max-w-5xl mx-auto px-6">
+        <h2 className="text-2xl font-bold text-white mb-16">Projects</h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {PROJECTS.map((project) => (
+            <motion.div 
+              key={project.id}
+              whileHover={{ y: -5 }}
+              className="glass-card overflow-hidden flex flex-col items-start p-6 text-left"
+            >
+              <div className="w-full aspect-[4/3] rounded-2xl overflow-hidden mb-6 bg-white/5">
+                <img src={project.image} alt={project.title} className="w-full h-full object-cover opacity-80 hover:opacity-100 transition-opacity" referrerPolicy="no-referrer" />
+              </div>
+              <h3 className="text-lg font-bold text-white mb-2">{project.title}</h3>
+              <p className="text-xs text-gray-500 mb-4 line-clamp-2 leading-relaxed">{project.description}</p>
+              <div className="flex flex-wrap gap-2 mb-6">
+                {project.tech.map(t => <span key={t} className="tag border-none !bg-white/5 !text-gray-400">{t}</span>)}
+              </div>
+              <div className="flex w-full gap-2 mt-auto">
+                <a href={project.demo} className="flex-1 py-2 text-xs font-bold text-center bg-blue-600 rounded-lg hover:bg-blue-500 transition-colors">Live Demo</a>
+                <a href={project.github} className="flex-1 py-2 text-xs font-bold text-center bg-white/5 rounded-lg border border-white/10 hover:bg-white/10 transition-colors">GitHub</a>
+              </div>
+            </motion.div>
           ))}
         </div>
-
-        <button className="md:hidden text-white" onClick={() => setIsOpen(!isOpen)}>
-          {isOpen ? <X size={20} /> : <Menu size={20} />}
-        </button>
       </div>
-    </nav>
+    </section>
+  );
+};
+
+const Experience = () => {
+  return (
+    <section className="py-24 bg-surface text-center">
+      <div className="max-w-4xl mx-auto px-6">
+        <h2 className="text-xl font-bold text-white mb-16 uppercase tracking-widest opacity-80">Experience / Education</h2>
+        <div className="relative pt-12">
+          <div className="timeline-line" />
+          <div className="relative mb-20">
+            <div className="text-xs font-mono text-gray-500 mb-8 tracking-widest uppercase">Timeline</div>
+            <div className="flex flex-col items-center">
+              <div className="timeline-dot top-20" />
+              <div className="mt-24 text-left glass-card p-6 inline-block max-w-sm">
+                <div className="text-blue-400 font-mono text-[10px] uppercase mb-1">Education</div>
+                <h4 className="text-white font-bold text-sm">B.Tech Computer Science</h4>
+                <div className="text-gray-500 text-xs mt-1">Anna University (2022—2026)</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+};
+
+const Achievements = () => {
+  return (
+    <section className="py-24 bg-surface text-center">
+      <div className="max-w-4xl mx-auto px-6">
+        <h2 className="text-xl font-bold text-white mb-12 uppercase tracking-widest opacity-80">Achievements</h2>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          {ACHIEVEMENTS.slice(0, 3).map((ach, idx) => (
+            <div key={idx} className="glass-card p-10 flex flex-col items-center justify-center text-center">
+              {idx === 0 ? <Code size={32} className="text-blue-400 mb-4" /> : idx === 1 ? <Cpu size={32} className="text-purple-400 mb-4" /> : <Award size={32} className="text-green-400 mb-4" />}
+              <h4 className="text-white font-bold text-sm mb-1">{ach.title}</h4>
+              <p className="text-[10px] text-gray-500 uppercase tracking-widest">{ach.issuer}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+};
+
+const Contact = () => {
+  return (
+    <section id="contact" className="py-24 bg-surface text-center">
+      <div className="max-w-xl mx-auto px-6">
+        <h2 className="text-2xl font-bold text-white mb-12">Contact</h2>
+        <div className="glass-card p-8 md:p-12">
+          <form className="space-y-4">
+            <input type="text" placeholder="Name" className="w-full px-6 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder:text-gray-600 focus:outline-hidden focus:border-blue-500/50 transition-all text-sm" />
+            <input type="email" placeholder="Email" className="w-full px-6 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder:text-gray-600 focus:outline-hidden focus:border-blue-500/50 transition-all text-sm" />
+            <textarea rows={4} placeholder="Message" className="w-full px-6 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder:text-gray-600 focus:outline-hidden focus:border-blue-500/50 transition-all text-sm resize-none" />
+            <button className="w-full py-4 rounded-xl bg-blue-600 font-bold hover:bg-blue-500 transition-all text-sm text-white shadow-lg shadow-blue-600/20">Contact</button>
+          </form>
+        </div>
+        <div className="flex justify-center gap-6 mt-12 opacity-60">
+          <a href="#" className="text-white hover:opacity-100 transition-opacity"><Github size={24} /></a>
+          <a href="#" className="text-white hover:opacity-100 transition-opacity"><Linkedin size={24} /></a>
+        </div>
+      </div>
+    </section>
   );
 };
 
 export default function App() {
-  const [filter, setFilter] = useState('All');
-  const categories = ['All', 'Web', 'Backend', 'AI'];
-  
-  const filteredProjects = filter === 'All' 
-    ? PROJECTS 
-    : PROJECTS.filter(p => p.category === filter);
-
   return (
-    <div className="min-h-screen pt-24 pb-12 px-6">
+    <div className="selection:bg-blue-500/30">
       <Navbar />
-      
-      <div className="max-w-[1240px] mx-auto grid grid-cols-1 md:grid-cols-12 md:grid-rows-[auto_auto_auto_auto] gap-4">
-        
-        {/* HERO SECTION */}
-        <BentoCard className="md:col-span-8 md:row-span-1 flex flex-col justify-center bg-[radial-gradient(circle_at_top_right,var(--color-accent-glow),transparent)] min-h-[300px]">
-          <div className="card-title-bento flex items-center gap-2">
-            <span className="text-accent">✧</span>
-            <span>Available for opportunities</span>
-          </div>
-          <h1 className="text-5xl md:text-6xl font-bold mb-4 bg-linear-to-br from-white to-gray-400 bg-clip-text text-transparent">
-            Sudarshan
-          </h1>
-          <p className="text-lg text-text-dim max-w-2xl leading-relaxed mb-8">
-            B.Tech Computer Science Student specializing in Python architecture 
-            and scalable software engineering. I build systems that solve real-world problems.
-          </p>
-          <div className="flex flex-wrap gap-3">
-            <a href="#projects" className="bg-accent text-white px-5 py-2.5 rounded-xl font-semibold text-sm hover:opacity-90 transition-opacity">
-              View Projects
-            </a>
-            <button className="bg-white/5 border border-border-dim px-5 py-2.5 rounded-xl font-semibold text-sm hover:bg-white/10 transition-colors">
-              Resume
-            </button>
-          </div>
-        </BentoCard>
-
-        {/* SKILLS SECTION */}
-        <BentoCard title="Technical Stack" icon={Cpu} className="md:col-span-4 md:row-span-1">
-          <div className="flex flex-wrap mt-2">
-            {[...SKILLS.languages, ...SKILLS.technologies, ...SKILLS.tools].slice(0, 12).map(skill => (
-              <span key={skill.name} className="skill-tag-bento">{skill.name}</span>
-            ))}
-          </div>
-        </BentoCard>
-
-        {/* EXPERIENCE SECTION */}
-        <BentoCard title="Experience" icon={Briefcase} className="md:col-span-4 md:row-span-2">
-          <div className="mt-4 space-y-6">
-            {EXPERIENCE.map((exp, idx) => (
-              <div key={idx} className="relative pl-6 border-l border-border-dim group">
-                <div className="absolute -left-1 top-0 w-2 h-2 bg-accent rounded-full" />
-                <div className="text-[10px] font-mono text-accent mb-1 uppercase">{exp.period}</div>
-                <div className="text-sm font-semibold text-white">{exp.role}</div>
-                <div className="text-xs text-text-dim mb-2">{exp.company}</div>
-              </div>
-            ))}
-            {EDUCATION.map((edu, idx) => (
-              <div key={idx} className="relative pl-6 border-l border-border-dim group">
-                <div className="absolute -left-1 top-0 w-2 h-2 bg-purple-500 rounded-full" />
-                <div className="text-[10px] font-mono text-purple-400 mb-1 uppercase">{edu.period}</div>
-                <div className="text-sm font-semibold text-white">{edu.degree}</div>
-                <div className="text-xs text-text-dim">{edu.school}</div>
-              </div>
-            ))}
-          </div>
-        </BentoCard>
-
-        {/* PROJECTS SECTION */}
-        <div className="md:col-span-8 md:row-span-2 grid grid-cols-1 sm:grid-cols-2 gap-4">
-          {filteredProjects.slice(0, 2).map((project) => (
-            <div key={project.id} className="bento-card flex flex-col justify-between group">
-              <div>
-                <div className="card-title-bento">Featured Project</div>
-                <h3 className="text-xl font-bold mb-2 group-hover:text-accent transition-colors">{project.title}</h3>
-                <p className="text-xs text-text-dim leading-relaxed">{project.description}</p>
-              </div>
-              <div className="mt-4 flex flex-wrap gap-2">
-                {project.tech.map(t => (
-                  <span key={t} className="tech-pill-bento">{t}</span>
-                ))}
-              </div>
-            </div>
-          ))}
-        </div>
-
-        {/* STATS SECTION */}
-        <BentoCard className="md:col-span-4 md:row-span-1 grid grid-cols-2 gap-3 !p-3">
-          <div className="bg-white/2 border border-border-dim rounded-xl p-3 text-center">
-            <div className="text-2xl font-bold text-accent">12+</div>
-            <div className="text-[10px] text-text-dim uppercase">Projects</div>
-          </div>
-          <div className="bg-white/2 border border-border-dim rounded-xl p-3 text-center">
-            <div className="text-2xl font-bold text-accent">400+</div>
-            <div className="text-[10px] text-text-dim uppercase">Commits</div>
-          </div>
-          <div className="bg-white/2 border border-border-dim rounded-xl p-3 text-center">
-            <div className="text-2xl font-bold text-accent">5</div>
-            <div className="text-[10px] text-text-dim uppercase">Awards</div>
-          </div>
-          <div className="bg-white/2 border border-border-dim rounded-xl p-3 text-center">
-            <div className="text-2xl font-bold text-accent">100%</div>
-            <div className="text-[10px] text-text-dim uppercase">Dedication</div>
-          </div>
-        </BentoCard>
-
-        {/* CONTACT SECTION */}
-        <BentoCard title="Get In Touch" icon={Mail} className="md:col-span-4 md:row-span-1 flex flex-col justify-center gap-3">
-          <a href="#" className="flex items-center gap-3 text-sm text-white bg-white/3 p-3 rounded-xl hover:bg-white/5 transition-colors">
-            <Mail size={16} className="text-accent" />
-            <span>sudarshan@cs.edu</span>
-          </a>
-          <a href="#" className="flex items-center gap-3 text-sm text-white bg-white/3 p-3 rounded-xl hover:bg-white/5 transition-colors">
-            <Linkedin size={16} className="text-accent" />
-            <span>linkedin/sudarshan-dev</span>
-          </a>
-          <a href="#" className="flex items-center gap-3 text-sm text-white bg-white/3 p-3 rounded-xl hover:bg-white/5 transition-colors">
-            <Github size={16} className="text-accent" />
-            <span>github/sudarshan-python</span>
-          </a>
-        </BentoCard>
-
-      </div>
-
-      <footer className="max-w-[1240px] mx-auto mt-12 py-6 border-t border-border-dim flex justify-between items-center text-[10px] font-mono text-text-dim uppercase tracking-widest">
-        <div>© 2026 Sudarshan</div>
-        <div className="flex gap-6">
-          <a href="#" className="hover:text-white transition-colors">Twitter</a>
-          <a href="#" className="hover:text-white transition-colors">Dribbble</a>
-        </div>
-      </footer>
+      <Hero />
+      <About />
+      <Projects />
+      <Experience />
+      <Achievements />
+      <Contact />
     </div>
   );
 }
