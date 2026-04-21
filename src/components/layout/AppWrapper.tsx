@@ -53,7 +53,7 @@ export const AppWrapper: React.FC<AppWrapperProps> = ({ children }) => {
         <meta property="og:type" content="website" />
         <meta property="og:title" content="Sudharsan S | Software Engineer" />
         <meta property="og:description" content="Building exceptional digital experiences through code and AI." />
-        <meta property="og:image" content="https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=1200&h=630&fit=crop" />
+        <meta property="og:image" content="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?q=80&w=1200&h=630&auto=format&fit=crop" />
 
         {/* Twitter */}
         <meta property="twitter:card" content="summary_large_image" />

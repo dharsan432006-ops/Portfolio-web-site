@@ -106,7 +106,7 @@ const Hero = ({ profile }: { profile: any }) => {
   const displayProfile = {
     name: profile?.name || 'Sudharsan',
     role: profile?.role || 'Software Engineer',
-    photo: profile?.photo || 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=800&h=1100&fit=crop',
+    photo: profile?.photo || 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?q=80&w=800&h=1100&auto=format&fit=crop',
     summary: profile?.summary || 'Building exceptional AI-powered web experiences with high-performance scalable architectures.'
   };
 
@@ -438,24 +438,30 @@ const ProjectModal = ({ project, onClose }: { project: any, onClose: () => void 
             </div>
           </div>
 
-          <div className="space-y-4">
-            <h3 className="text-xs font-bold text-gray-500 uppercase tracking-widest font-display">Gallery</h3>
-            <div className="grid gap-4">
+          <div className="space-y-6">
+            <div className="flex items-center justify-between">
+                <h3 className="text-[10px] font-bold text-gray-400 uppercase tracking-[0.3em] font-mono">Visual Assets Repository</h3>
+                <span className="text-[10px] text-gray-600 font-mono italic">{project.images.length} Objects Loaded</span>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
               {project.images.map((img: string, idx: number) => (
                 <motion.div 
                   key={idx}
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: idx * 0.1 }}
-                  className="rounded-2xl overflow-hidden bg-white/5 group/image relative"
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ delay: 0.2 + idx * 0.1, duration: 0.5 }}
+                  className={`rounded-[24px] overflow-hidden bg-white/5 group/image relative border border-white/5 hover:border-accent/40 shadow-xl transition-all cursor-zoom-in ${idx === 0 ? 'col-span-2' : ''}`}
                 >
                   <img 
                     src={img} 
-                    alt={`${project.title} screenshot ${idx + 1}`} 
-                    className="w-full h-auto object-cover opacity-90 group-hover/image:opacity-100 transition-opacity"
+                    alt={`${project.title} asset ${idx + 1}`} 
+                    className="w-full h-full object-cover opacity-80 group-hover/image:opacity-100 group-hover/image:scale-105 transition-all duration-700"
                     referrerPolicy="no-referrer"
                   />
                   <div className="absolute inset-0 bg-accent/10 opacity-0 group-hover/image:opacity-100 transition-opacity" />
+                  <div className="absolute bottom-4 right-4 p-2 bg-black/40 backdrop-blur-md rounded-lg opacity-0 group-hover/image:opacity-100 transition-all translate-x-2 group-hover:translate-x-0">
+                      <Maximize2 size={12} className="text-white" />
+                  </div>
                 </motion.div>
               ))}
             </div>
@@ -471,107 +477,138 @@ const Projects = ({ projects: liveProjects }: { projects: any[] }) => {
   const [selectedProject, setSelectedProject] = useState<any>(null);
   
   const projects = liveProjects.length > 0 ? liveProjects : STATIC_PROJECTS;
+  
+  // Extract unique categories and tech
   const categories = ['All', ...Array.from(new Set(projects.map(p => (p as any).category)))];
-  const allTech = ['All', ...Array.from(new Set(projects.flatMap(p => (p as any).tech)))].slice(0, 10);
+  const allTech = Array.from(new Set(projects.flatMap(p => (p as any).tech))).sort();
   
   const filteredProjects = filter === 'All' 
     ? projects 
     : projects.filter(p => (p as any).category === filter || (p as any).tech.includes(filter));
 
   return (
-    <section id="projects" className="py-24 bg-bg-light dark:bg-[#050505] text-center">
-      <div className="max-w-6xl mx-auto px-6">
-        <span className="badge-orange mb-6 inline-block">Portfolio</span>
-        <motion.h2 
-          initial={{ opacity: 0, y: 10 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          className="text-4xl md:text-5xl font-display font-bold text-gray-900 dark:text-white mb-12"
-        >
-          Selected Projects
-        </motion.h2>
+    <section id="projects" className="py-32 bg-bg-light dark:bg-[#050505] text-center relative overflow-hidden">
+      {/* Decorative background element */}
+      <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-accent/2 opacity-20 blur-[120px] -z-10 translate-x-1/2 -translate-y-1/2" />
+      
+      <div className="max-w-7xl mx-auto px-6">
+        <div className="flex flex-col items-center mb-20">
+          <span className="badge-orange mb-6">Archive</span>
+          <motion.h2 
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="text-5xl md:text-6xl font-display font-bold text-gray-900 dark:text-white mb-6 tracking-tight"
+          >
+            Digital <span className="text-accent italic font-serif">Artifacts</span>
+          </motion.h2>
+          <p className="max-w-2xl text-gray-500 dark:text-gray-400 text-lg">
+            A curated selection of experiments and precision-engineered solutions across AI, systems, and creative tech.
+          </p>
+        </div>
         
-        <motion.div 
-          initial={{ opacity: 0, y: 10 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ delay: 0.1 }}
-          className="flex flex-wrap justify-center gap-2 mb-16 overflow-x-auto pb-4 no-scrollbar"
-        >
-          {categories.map(cat => (
+        {/* Advanced Filter UI */}
+        <div className="mb-20 space-y-8">
+          <div className="flex flex-wrap justify-center gap-2">
+            {categories.map(cat => (
               <button 
-              key={cat}
-              onClick={() => setFilter(cat)}
-              className={`px-4 py-1.5 rounded-full text-[10px] font-display font-bold uppercase tracking-widest transition-all border shrink-0 ${filter === cat ? 'bg-accent border-accent text-white shadow-lg shadow-accent/20' : 'bg-white dark:bg-white/5 border-gray-200 dark:border-white/10 text-gray-500 hover:text-gray-800 dark:hover:text-white'}`}
-            >
-              {cat}
-            </button>
-          ))}
-          <div className="w-full h-px bg-gray-100 dark:bg-white/5 my-4" />
-          {allTech.map(t => (
-            <button 
-              key={t}
-              onClick={() => setFilter(t)}
-              className={`px-3 py-1 rounded-full text-[9px] font-bold uppercase transition-all border shrink-0 ${filter === t ? 'bg-accent/10 border-accent text-accent' : 'bg-transparent border-gray-100 dark:border-white/5 text-gray-400 hover:border-accent/40'}`}
-            >
-              #{t}
-            </button>
-          ))}
-        </motion.div>
+                key={cat}
+                onClick={() => setFilter(cat)}
+                className={`px-6 py-2.5 rounded-full text-[11px] font-bold uppercase tracking-widest transition-all border ${
+                  filter === cat 
+                  ? 'bg-accent border-accent text-white shadow-[0_10px_20px_rgba(255,82,82,0.2)]' 
+                  : 'bg-white dark:bg-white/5 border-gray-100 dark:border-white/10 text-gray-500 hover:text-gray-900 dark:hover:text-white'
+                }`}
+              >
+                {cat}
+              </button>
+            ))}
+          </div>
+          
+          <div className="flex flex-wrap justify-center gap-2 max-w-4xl mx-auto">
+            {allTech.map(t => (
+              <button 
+                key={t}
+                onClick={() => setFilter(t)}
+                className={`px-4 py-1.5 rounded-xl text-[10px] font-bold uppercase tracking-wider transition-all border ${
+                  filter === t 
+                  ? 'bg-accent/10 border-accent/30 text-accent' 
+                  : 'bg-transparent border-gray-100 dark:border-white/5 text-gray-400 hover:border-accent/20'
+                }`}
+              >
+                #{t}
+              </button>
+            ))}
+          </div>
+        </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-10">
           <AnimatePresence mode="popLayout">
             {filteredProjects.map((project: any) => (
               <motion.div 
                 layout
                 key={project.id}
-                initial={{ opacity: 0, scale: 0.95 }}
+                initial={{ opacity: 0, scale: 0.9 }}
                 animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.95 }}
-                whileHover={{ y: -10, transition: { duration: 0.4, ease: "easeOut" } }}
+                exit={{ opacity: 0, scale: 0.9 }}
+                whileHover={{ y: -12, scale: 1.02 }}
                 onClick={() => setSelectedProject(project)}
-                className="glass-card overflow-hidden flex flex-col items-start p-6 text-left cursor-pointer group hover:shadow-2xl hover:shadow-accent/10"
+                className="glass-card overflow-hidden flex flex-col items-start p-8 text-left cursor-pointer group shadow-sm hover:shadow-2xl hover:shadow-accent/10 transition-shadow duration-500"
               >
-                <ImageCarousel images={project.images} title={project.title} />
+                <div className="relative w-full rounded-2xl overflow-hidden mb-8 shadow-inner">
+                  <ImageCarousel images={project.images} title={project.title} />
+                  <div className="absolute top-4 right-4 z-10 opacity-0 group-hover:opacity-100 transition-all translate-y-2 group-hover:translate-y-0">
+                    <div className="p-2 bg-white/10 backdrop-blur-md rounded-xl border border-white/20 text-white">
+                      <Maximize2 size={16} />
+                    </div>
+                  </div>
+                </div>
                 
-                <div className="flex items-center justify-between w-full mb-3">
-                  <h3 className="text-xl font-bold text-gray-900 transition-colors group-hover:text-accent font-display">{project.title}</h3>
-                  <div className="p-1.5 rounded-full bg-gray-100 group-hover:bg-accent/10 group-hover:text-accent transition-colors">
-                    <Maximize2 size={14} className="opacity-60 group-hover:opacity-100" />
+                <div className="flex items-center justify-between w-full mb-4">
+                  <h3 className="text-2xl font-bold text-gray-900 dark:text-white transition-colors group-hover:text-accent font-display tracking-tight">
+                    {project.title}
+                  </h3>
+                  <div className="text-[10px] font-mono font-bold text-gray-400 bg-white/5 px-2 py-1 rounded border border-white/5">
+                    0{filteredProjects.indexOf(project) + 1}
                   </div>
                 </div>
                 
                 <Description 
                   text={project.description} 
-                  className="text-sm text-gray-500 dark:text-gray-400 mb-6 line-clamp-3 leading-relaxed font-sans" 
+                  className="text-sm text-gray-500 dark:text-gray-400 mb-8 line-clamp-3 leading-relaxed" 
                 />
                 
-                <div className="flex flex-wrap gap-2 mb-6">
+                <div className="flex flex-wrap gap-2 mb-8">
                   {project.tech.map((t: string) => (
                     <button 
                       key={t} 
                       onClick={(e) => { e.stopPropagation(); setFilter(t); }}
-                      className="tag border-none !bg-accent/5 dark:!bg-white/5 !text-accent dark:!text-gray-400 hover:!bg-accent hover:!text-white transition-all"
+                      className={`px-3 py-1 rounded-lg text-[9px] font-bold uppercase tracking-wider transition-all border ${
+                        filter === t 
+                        ? 'bg-accent/20 border-accent/40 text-accent' 
+                        : 'bg-white/5 dark:bg-white/5 border-transparent text-gray-500 hover:border-white/10'
+                      }`}
                     >
                       {t}
                     </button>
                   ))}
                 </div>
                 
-                <div className="flex w-full gap-2 mt-auto">
+                <div className="flex w-full gap-3 mt-auto">
                   <a 
                     href={project.demo} 
                     onClick={e => e.stopPropagation()}
-                    className="flex-1 py-2.5 text-xs font-bold text-center bg-accent text-white rounded-full hover:opacity-90 transition-all"
+                    className="flex-1 btn-primary !py-2.5 !text-[10px] !uppercase !tracking-widest"
                   >
-                    Demo
+                    Launch Demo
                   </a>
                   <a 
                     href={project.github} 
                     onClick={e => e.stopPropagation()}
-                    className="flex-1 py-2.5 text-xs font-bold text-center bg-white border border-gray-200 text-gray-700 rounded-full hover:bg-gray-50 transition-all"
+                    className="p-2.5 bg-gray-50 dark:bg-white/5 border border-gray-100 dark:border-white/10 rounded-full text-gray-500 hover:text-accent hover:border-accent transition-all"
+                    title="Source Code"
                   >
-                    GitHub
+                    <Github size={18} />
                   </a>
                 </div>
               </motion.div>
@@ -593,7 +630,7 @@ const Experience = () => {
   const [view, setView] = useState<'timeline' | 'list'>('timeline');
 
   return (
-    <section id="experience" className="py-24 bg-white text-center border-t border-gray-100">
+    <section id="experience" className="py-24 bg-white dark:bg-[#080808] text-center border-t border-gray-100 dark:border-white/5">
       <div className="max-w-4xl mx-auto px-6">
         <motion.div 
           initial={{ opacity: 0, y: 10 }}
