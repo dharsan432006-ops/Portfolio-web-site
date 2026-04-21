@@ -1,0 +1,60 @@
+{
+  "entities": {
+    "profile": {
+      "title": "User Profile",
+      "description": "General profile information including the user's name, role, photo, and summary.",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "role": { "type": "string" },
+        "photo": { "type": "string" },
+        "summary": { "type": "string" },
+        "cvUrl": { "type": "string" }
+      },
+      "required": ["name", "role", "photo", "summary"]
+    },
+    "project": {
+      "title": "Portfolio Project",
+      "description": "Details for a specific project.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "title": { "type": "string" },
+        "description": { "type": "string" },
+        "tech": { "type": "array", "items": { "type": "string" } },
+        "github": { "type": "string" },
+        "demo": { "type": "string" },
+        "category": { "type": "string" },
+        "images": { "type": "array", "items": { "type": "string" } },
+        "codeSnippet": { "type": "string" },
+        "order": { "type": "number" }
+      },
+      "required": ["id", "title", "description", "tech", "category"]
+    },
+    "skill": {
+      "title": "Technical Skill",
+      "description": "A specific technical skill and its proficiency level.",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "level": { "type": "number" },
+        "category": { "type": "string", "enum": ["languages", "technologies", "tools"] }
+      },
+      "required": ["name", "level", "category"]
+    }
+  },
+  "firestore": {
+    "/config/profile": {
+      "schema": "profile",
+      "description": "Stores global profile information."
+    },
+    "/projects/{projectId}": {
+      "schema": "project",
+      "description": "Collection of portfolio projects."
+    },
+    "/skills/{skillId}": {
+      "schema": "skill",
+      "description": "Collection of technical skills."
+    }
+  }
+}

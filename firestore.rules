@@ -1,0 +1,62 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // 0. Catch-all Deny
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Helpers
+    function isSignedIn() { return request.auth != null; }
+    function isOwner() { return isSignedIn() && request.auth.uid == 'SDR_OWNER_UID_PLACEHOLDER'; } // We will use a dedicated admin collection eventually or hardcode for single-user
+    function incoming() { return request.resource.data; }
+    function existing() { return resource.data; }
+    function isValidId(id) { return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$'); }
+    
+    // --- Profile ---
+    match /config/profile {
+      allow read: if true;
+      allow write: if isOwner() && isValidProfile(incoming());
+    }
+
+    function isValidProfile(data) {
+      return data.keys().hasAll(['name', 'role', 'photo', 'summary']) 
+        && data.name is string && data.name.size() <= 100
+        && data.role is string && data.role.size() <= 100
+        && data.photo is string && data.photo.size() <= 1000
+        && data.summary is string && data.summary.size() <= 5000;
+    }
+
+    // --- Projects ---
+    match /projects/{projectId} {
+      allow read: if true;
+      allow create: if isOwner() && isValidId(projectId) && isValidProject(incoming());
+      allow update: if isOwner() && isValidProject(incoming());
+      allow delete: if isOwner();
+    }
+
+    function isValidProject(data) {
+      return data.keys().hasAll(['id', 'title', 'description', 'tech', 'category'])
+        && data.id is string && data.id.size() <= 128
+        && data.title is string && data.title.size() <= 200
+        && data.description is string && data.description.size() <= 10000
+        && data.tech is list && data.tech.size() <= 20
+        && data.category is string && data.category.size() <= 50;
+    }
+
+    // --- Skills ---
+    match /skills/{skillId} {
+      allow read: if true;
+      allow write: if isOwner() && isValidId(skillId) && isValidSkill(incoming());
+    }
+
+    function isValidSkill(data) {
+      return data.keys().hasAll(['name', 'level', 'category'])
+        && data.name is string && data.name.size() <= 100
+        && data.level is number && data.level >= 0 && data.level <= 100
+        && data.category in ['languages', 'technologies', 'tools'];
+    }
+  }
+}
