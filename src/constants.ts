@@ -4,8 +4,8 @@ export const PROJECTS = [
     title: 'AI-Powered Code Auditor',
     description: 'An automated security auditing tool for Python projects using LLMs to detect vulnerabilities and suggest fixes.',
     tech: ['Python', 'Gemini API', 'Docker', 'FastAPI'],
-    github: 'https://github.com/sudarshan/ai-code-auditor',
-    demo: 'https://demo.sudarshan.com/ai-auditor',
+    github: 'https://github.com/mohamedsarbudeen/ai-code-auditor',
+    demo: 'https://demo.mohamedsarbudeen.com/ai-auditor',
     category: 'AI',
     image: 'https://picsum.photos/seed/code-audit/800/600'
   },
@@ -14,8 +14,8 @@ export const PROJECTS = [
     title: 'Distributed Web Crawler',
     description: 'A high-performance crawler built to handle millions of pages with a focus on efficiency and polite crawling.',
     tech: ['Go', 'Redis', 'PostgreSQL', 'gRPC'],
-    github: 'https://github.com/sudarshan/distributed-crawler',
-    demo: 'https://demo.sudarshan.com/crawler',
+    github: 'https://github.com/mohamedsarbudeen/distributed-crawler',
+    demo: 'https://demo.mohamedsarbudeen.com/crawler',
     category: 'Backend',
     image: 'https://picsum.photos/seed/crawler/800/600'
   },
@@ -24,7 +24,7 @@ export const PROJECTS = [
     title: 'Neural Net Visualizer',
     description: 'An interactive web application developed to visualize the training process of neural networks in real-time.',
     tech: ['TypeScript', 'D3.js', 'React', 'TensorFlow.js'],
-    github: 'https://github.com/sudarshan/neural-viz',
+    github: 'https://github.com/mohamedsarbudeen/neural-viz',
     demo: 'https://neural-viz.vercel.app',
     category: 'AI',
     image: 'https://picsum.photos/seed/neural/800/600'
@@ -34,7 +34,7 @@ export const PROJECTS = [
     title: 'Decentralized Voting Platform',
     description: 'Ensuring transparency in university elections through a secure blockchain-based voting system.',
     tech: ['Solidity', 'Ethereum', 'Web3.js', 'Next.js'],
-    github: 'https://github.com/sudarshan/blockchain-voting',
+    github: 'https://github.com/mohamedsarbudeen/blockchain-voting',
     demo: 'https://u-vote-blockchain.io',
     category: 'Web',
     image: 'https://picsum.photos/seed/voting/800/600'
@@ -44,7 +44,7 @@ export const PROJECTS = [
     title: 'HealthTrack Pro',
     description: 'A comprehensive health monitoring dashboard with real-time vitals tracking and predictive health alerts.',
     tech: ['React', 'TypeScript', 'Tailwind CSS', 'Firebase'],
-    github: 'https://github.com/sudarshan/health-track',
+    github: 'https://github.com/mohamedsarbudeen/health-track',
     demo: 'https://healthtrack-pro.vercel.app',
     category: 'Web',
     image: 'https://picsum.photos/seed/health/800/600'
@@ -54,7 +54,7 @@ export const PROJECTS = [
     title: 'Linux Kernel Module',
     description: 'A character driver for hardware monitoring used to track CPU temperature and fan speeds at the kernel level.',
     tech: ['C', 'Linux Kernel', 'Shell Scripting'],
-    github: 'https://github.com/sudarshan/kernel-monitor',
+    github: 'https://github.com/mohamedsarbudeen/kernel-monitor',
     demo: '#',
     category: 'Backend',
     image: 'https://picsum.photos/seed/linux/800/600'

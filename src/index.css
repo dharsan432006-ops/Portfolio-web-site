@@ -6,8 +6,8 @@
   --font-display: "Space Grotesk", sans-serif;
   --font-mono: "JetBrains Mono", monospace;
   
-  --color-accent: #3b82f6;
-  --color-surface: #020205;
+  --color-accent: #10b981;
+  --color-surface: #020403;
   --color-card: rgba(255, 255, 255, 0.03);
   --color-border-dim: rgba(255, 255, 255, 0.08);
 }
@@ -28,25 +28,25 @@
   left: -50%;
   width: 200%;
   height: 200%;
-  background: radial-gradient(circle at 20% 30%, #1e40af 0%, transparent 30%),
-              radial-gradient(circle at 80% 20%, #581c87 0%, transparent 30%),
-              radial-gradient(circle at 50% 50%, #1d4ed8 0%, transparent 40%),
-              #020205;
+  background: radial-gradient(circle at 20% 30%, #064e3b 0%, transparent 30%),
+              radial-gradient(circle at 80% 20%, #14532d 0%, transparent 30%),
+              radial-gradient(circle at 50% 50%, #022c22 0%, transparent 40%),
+              #020403;
   filter: blur(100px);
   z-index: -1;
   opacity: 0.6;
 }
 
 .glass-card {
-  @apply backdrop-blur-xl bg-white/[0.03] border border-white/[0.08] rounded-3xl transition-all duration-300;
+  @apply backdrop-blur-[40px] bg-white/[0.04] border border-white/[0.12] rounded-[32px] transition-all duration-500 shadow-[0_8px_32px_0_rgba(0,0,0,0.37)];
 }
 
 .glass-card:hover {
-  @apply border-white/[0.15] bg-white/[0.05] shadow-2xl shadow-blue-500/10;
+  @apply border-white/[0.2] bg-white/[0.07] shadow-2xl shadow-blue-500/[0.15] -translate-y-1;
 }
 
 .btn-primary {
-  @apply px-6 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-semibold transition-all shadow-lg shadow-blue-600/20;
+  @apply px-6 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-semibold transition-all shadow-lg shadow-emerald-600/20;
 }
 
 .btn-secondary {
