@@ -455,9 +455,24 @@ export const AdminPanel = () => {
                                 )}
                                 <div className="absolute inset-0 bg-accent/20 opacity-0 group-hover:opacity-100 transition-opacity" />
                               </div>
-                              <div className="absolute -bottom-4 -right-4 p-5 bg-accent text-white rounded-[24px] shadow-2xl hover:scale-110 active:scale-95 transition-all">
+                              <label className="absolute -bottom-4 -right-4 p-5 bg-accent text-white rounded-[24px] shadow-2xl hover:scale-110 active:scale-95 transition-all cursor-pointer">
                                 <Camera size={20} />
-                              </div>
+                                <input 
+                                  type="file" 
+                                  className="hidden" 
+                                  accept="image/*"
+                                  onChange={(e: any) => {
+                                    const file = e.target.files?.[0];
+                                    if (file) {
+                                      const reader = new FileReader();
+                                      reader.onloadend = () => {
+                                        setProfile({...profile, photo: reader.result as string});
+                                      };
+                                      reader.readAsDataURL(file);
+                                    }
+                                  }}
+                                />
+                              </label>
                             </div>
                             <div className="flex-1 space-y-8 pt-4">
                               <div className="space-y-2">

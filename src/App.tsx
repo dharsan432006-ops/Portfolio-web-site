@@ -296,7 +296,7 @@ const Description = ({ text, className }: { text: string, className?: string }) 
   );
 };
 
-const ImageCarousel = ({ images, title }: { images: string[], title: string }) => {
+const ImageCarousel = ({ images, title, onImageClick }: { images: string[], title: string, onImageClick?: (index: number) => void }) => {
   const [index, setIndex] = useState(0);
 
   const next = (e: React.MouseEvent) => {
@@ -320,8 +320,10 @@ const ImageCarousel = ({ images, title }: { images: string[], title: string }) =
           animate={{ opacity: 1, scale: 1 }}
           exit={{ opacity: 0, scale: 0.95 }}
           transition={{ duration: 0.5 }}
-          className="w-full h-full object-cover opacity-80 group-hover/carousel:scale-110 transition-transform duration-700"
+          className="w-full h-full object-cover opacity-80 group-hover/carousel:scale-110 transition-transform duration-700 cursor-zoom-in"
           referrerPolicy="no-referrer"
+          loading="lazy"
+          onClick={() => onImageClick?.(index)}
         />
       </AnimatePresence>
       
@@ -355,136 +357,191 @@ const ImageCarousel = ({ images, title }: { images: string[], title: string }) =
 };
 
 const ProjectModal = ({ project, onClose }: { project: any, onClose: () => void }) => {
+  const [lightboxImage, setLightboxImage] = useState<string | null>(null);
+
   useEffect(() => {
     document.body.style.overflow = 'hidden';
     return () => { document.body.style.overflow = 'unset'; };
   }, []);
 
   return (
-    <motion.div 
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-      className="fixed inset-0 z-[200] flex items-center justify-center p-4 md:p-8 bg-black/90 backdrop-blur-xl"
-      onClick={onClose}
-    >
+    <>
       <motion.div 
-        initial={{ scale: 0.9, y: 20 }}
-        animate={{ scale: 1, y: 0 }}
-        exit={{ scale: 0.9, y: 20 }}
-        className="glass-card w-full max-w-5xl max-h-[90vh] overflow-y-auto relative no-scrollbar"
-        onClick={e => e.stopPropagation()}
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        className="fixed inset-0 z-[200] flex items-center justify-center p-4 md:p-8 bg-black/90 backdrop-blur-xl"
+        onClick={onClose}
       >
-        <button 
-          onClick={onClose}
-          className="absolute top-6 right-6 z-10 p-2 bg-white/5 hover:bg-white/10 rounded-full transition-colors border border-white/10"
+        <motion.div 
+          initial={{ scale: 0.9, y: 20 }}
+          animate={{ scale: 1, y: 0 }}
+          exit={{ scale: 0.9, y: 20 }}
+          className="glass-card w-full max-w-5xl max-h-[90vh] overflow-y-auto relative no-scrollbar"
+          onClick={e => e.stopPropagation()}
         >
-          <X size={20} className="text-white" />
-        </button>
+          <button 
+            onClick={onClose}
+            className="absolute top-6 right-6 z-10 p-2 bg-white/5 hover:bg-white/10 rounded-full transition-colors border border-white/10"
+          >
+            <X size={20} className="text-white" />
+          </button>
 
-        <div className="grid lg:grid-cols-2 gap-8 p-8 md:p-12">
-          <div className="space-y-6">
-            <div className="space-y-4">
-              <span className="tag !bg-accent/10 !text-accent border-none uppercase tracking-widest text-[10px] font-bold">
-                {project.category}
-              </span>
-              <h2 className="text-3xl md:text-4xl font-display font-bold text-gray-900 leading-tight">
-                {project.title}
-              </h2>
-            </div>
-
-            <div className="prose prose-invert max-w-none">
-              <Description 
-                text={project.description} 
-                className="text-gray-600 dark:text-gray-300 text-sm md:text-base leading-relaxed" 
-              />
-            </div>
-
-            {project.codeSnippet && (
-              <div className="space-y-3">
-                <div className="flex items-center gap-2 text-[10px] uppercase tracking-widest font-bold text-gray-500">
-                  <Terminal size={14} /> Core Implementation
-                </div>
-                <div className="rounded-2xl overflow-hidden border border-white/5 bg-[#1e1e1e]">
-                  <SyntaxHighlighter 
-                    language={project.tech[0].toLowerCase()} 
-                    style={vscDarkPlus}
-                    customStyle={{
-                      background: 'transparent',
-                      padding: '1.5rem',
-                      fontSize: '0.8rem',
-                      fontFamily: '"JetBrains Mono", monospace'
-                    }}
-                  >
-                    {project.codeSnippet}
-                  </SyntaxHighlighter>
-                </div>
+          <div className="grid lg:grid-cols-2 gap-8 p-8 md:p-12">
+            <div className="space-y-6">
+              <div className="space-y-4">
+                <span className="tag !bg-accent/10 !text-accent border-none uppercase tracking-widest text-[10px] font-bold">
+                  {project.category}
+                </span>
+                <h2 className="text-3xl md:text-4xl font-display font-bold text-gray-900 leading-tight">
+                  {project.title}
+                </h2>
               </div>
-            )}
 
-            <div className="flex flex-wrap gap-2">
-              {project.tech.map((t: string) => (
-                <span key={t} className="tag border-none !bg-white/5 !text-gray-400">{t}</span>
-              ))}
-            </div>
+              <div className="prose prose-invert max-w-none">
+                <Description 
+                  text={project.description} 
+                  className="text-gray-600 dark:text-gray-300 text-sm md:text-base leading-relaxed" 
+                />
+              </div>
 
-            <div className="flex gap-4 pt-4">
-              <a href={project.demo} className="btn-primary flex items-center gap-2">
-                <ExternalLink size={16} /> Live Project
-              </a>
-              <a href={project.github} className="btn-secondary flex items-center gap-2">
-                <Github size={16} /> Source Code
-              </a>
-            </div>
-          </div>
-
-          <div className="space-y-6">
-            <div className="flex items-center justify-between">
-                <h3 className="text-[10px] font-bold text-gray-400 uppercase tracking-[0.3em] font-mono">Visual Assets Repository</h3>
-                <span className="text-[10px] text-gray-600 font-mono italic">{project.images.length} Objects Loaded</span>
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              {project.images.map((img: string, idx: number) => (
-                <motion.div 
-                  key={idx}
-                  initial={{ opacity: 0, scale: 0.9 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  transition={{ delay: 0.2 + idx * 0.1, duration: 0.5 }}
-                  className={`rounded-[24px] overflow-hidden bg-white/5 group/image relative border border-white/5 hover:border-accent/40 shadow-xl transition-all cursor-zoom-in ${idx === 0 ? 'col-span-2' : ''}`}
-                >
-                  <img 
-                    src={img} 
-                    alt={`${project.title} asset ${idx + 1}`} 
-                    className="w-full h-full object-cover opacity-80 group-hover/image:opacity-100 group-hover/image:scale-105 transition-all duration-700"
-                    referrerPolicy="no-referrer"
-                  />
-                  <div className="absolute inset-0 bg-accent/10 opacity-0 group-hover/image:opacity-100 transition-opacity" />
-                  <div className="absolute bottom-4 right-4 p-2 bg-black/40 backdrop-blur-md rounded-lg opacity-0 group-hover/image:opacity-100 transition-all translate-x-2 group-hover:translate-x-0">
-                      <Maximize2 size={12} className="text-white" />
+              {project.codeSnippet && (
+                <div className="space-y-3">
+                  <div className="flex items-center gap-2 text-[10px] uppercase tracking-widest font-bold text-gray-500">
+                    <Terminal size={14} /> Core Implementation
                   </div>
-                </motion.div>
-              ))}
+                  <div className="rounded-2xl overflow-hidden border border-white/5 bg-[#1e1e1e]">
+                    <SyntaxHighlighter 
+                      language={project.tech[0].toLowerCase()} 
+                      style={vscDarkPlus}
+                      customStyle={{
+                        background: 'transparent',
+                        padding: '1.5rem',
+                        fontSize: '0.8rem',
+                        fontFamily: '"JetBrains Mono", monospace'
+                      }}
+                    >
+                      {project.codeSnippet}
+                    </SyntaxHighlighter>
+                  </div>
+                </div>
+              )}
+
+              <div className="flex flex-wrap gap-2">
+                {project.tech.map((t: string) => (
+                  <span key={t} className="tag border-none !bg-white/5 !text-gray-400">{t}</span>
+                ))}
+              </div>
+
+              <div className="flex gap-4 pt-4">
+                <a href={project.demo} className="btn-primary flex items-center gap-2">
+                  <ExternalLink size={16} /> Live Project
+                </a>
+                <a href={project.github} className="btn-secondary flex items-center gap-2">
+                  <Github size={16} /> Source Code
+                </a>
+              </div>
+            </div>
+
+            <div className="space-y-6">
+              <div className="flex items-center justify-between">
+                  <h3 className="text-[10px] font-bold text-gray-400 uppercase tracking-[0.3em] font-mono">Visual Assets Repository</h3>
+                  <span className="text-[10px] text-gray-600 font-mono italic">{project.images.length} Objects Loaded</span>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                {project.images.map((img: string, idx: number) => (
+                  <motion.div 
+                    key={idx}
+                    initial={{ opacity: 0, scale: 0.9 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    transition={{ delay: 0.2 + idx * 0.1, duration: 0.5 }}
+                    onClick={() => setLightboxImage(img)}
+                    className={`rounded-[24px] overflow-hidden bg-white/5 group/image relative border border-white/5 hover:border-accent/40 shadow-xl transition-all cursor-zoom-in ${idx === 0 ? 'col-span-2' : ''}`}
+                  >
+                    <img 
+                      src={img} 
+                      alt={`${project.title} asset ${idx + 1}`} 
+                      className="w-full h-full object-cover opacity-80 group-hover/image:opacity-100 group-hover/image:scale-105 transition-all duration-700"
+                      referrerPolicy="no-referrer"
+                      loading="lazy"
+                    />
+                    <div className="absolute inset-0 bg-accent/10 opacity-0 group-hover/image:opacity-100 transition-opacity" />
+                    <div className="absolute bottom-4 right-4 p-2 bg-black/40 backdrop-blur-md rounded-lg opacity-0 group-hover/image:opacity-100 transition-all translate-x-2 group-hover:translate-x-0">
+                        <Maximize2 size={12} className="text-white" />
+                    </div>
+                  </motion.div>
+                ))}
+              </div>
             </div>
           </div>
-        </div>
+        </motion.div>
       </motion.div>
-    </motion.div>
+
+      {/* Lightbox */}
+      <AnimatePresence>
+        {lightboxImage && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => setLightboxImage(null)}
+            className="fixed inset-0 z-[1000] bg-black/95 flex items-center justify-center p-4 cursor-zoom-out"
+          >
+            <motion.img 
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              src={lightboxImage}
+              className="max-w-full max-h-full rounded-2xl shadow-2xl"
+              alt="Preview"
+              referrerPolicy="no-referrer"
+            />
+            <button className="absolute top-8 right-8 text-white/50 hover:text-white transition-colors">
+              <X size={32} />
+            </button>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </>
   );
 };
 
 const Projects = ({ projects: liveProjects }: { projects: any[] }) => {
-  const [filter, setFilter] = useState('All');
+  const [activeCategories, setActiveCategories] = useState<string[]>(['All']);
+  const [activeTech, setActiveTech] = useState<string[]>([]);
   const [selectedProject, setSelectedProject] = useState<any>(null);
   
   const projects = liveProjects.length > 0 ? liveProjects : STATIC_PROJECTS;
   
-  // Extract unique categories and tech
   const categories = ['All', ...Array.from(new Set(projects.map(p => (p as any).category)))];
   const allTech = Array.from(new Set(projects.flatMap(p => (p as any).tech))).sort();
   
-  const filteredProjects = filter === 'All' 
-    ? projects 
-    : projects.filter(p => (p as any).category === filter || (p as any).tech.includes(filter));
+  const filteredProjects = projects.filter(p => {
+    const categoryMatch = activeCategories.includes('All') || activeCategories.includes((p as any).category);
+    const techMatch = activeTech.length === 0 || activeTech.some(t => (p as any).tech.includes(t));
+    return categoryMatch && techMatch;
+  });
+
+  const toggleCategory = (cat: string) => {
+    if (cat === 'All') {
+      setActiveCategories(['All']);
+    } else {
+      setActiveCategories(prev => {
+        const next = prev.filter(c => c !== 'All');
+        if (next.includes(cat)) {
+          const filtered = next.filter(c => c !== cat);
+          return filtered.length === 0 ? ['All'] : filtered;
+        }
+        return [...next, cat];
+      });
+    }
+  };
+
+  const toggleTech = (tech: string) => {
+    setActiveTech(prev => 
+      prev.includes(tech) ? prev.filter(t => t !== tech) : [...prev, tech]
+    );
+  };
 
   return (
     <section id="projects" className="py-32 bg-bg-light dark:bg-[#050505] text-center relative overflow-hidden">
@@ -492,7 +549,7 @@ const Projects = ({ projects: liveProjects }: { projects: any[] }) => {
       <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-accent/2 opacity-20 blur-[120px] -z-10 translate-x-1/2 -translate-y-1/2" />
       
       <div className="max-w-7xl mx-auto px-6">
-        <div className="flex flex-col items-center mb-20">
+        <div className="flex flex-col items-center mb-10">
           <span className="badge-orange mb-6">Archive</span>
           <motion.h2 
             initial={{ opacity: 0, y: 20 }}
@@ -503,42 +560,56 @@ const Projects = ({ projects: liveProjects }: { projects: any[] }) => {
             Digital <span className="text-accent italic font-serif">Artifacts</span>
           </motion.h2>
           <p className="max-w-2xl text-gray-500 dark:text-gray-400 text-lg">
-            A curated selection of experiments and precision-engineered solutions across AI, systems, and creative tech.
+            A curated selection of experiments and precision-engineered solutions.
           </p>
         </div>
         
-        {/* Advanced Filter UI */}
-        <div className="mb-20 space-y-8">
-          <div className="flex flex-wrap justify-center gap-2">
-            {categories.map(cat => (
-              <button 
-                key={cat}
-                onClick={() => setFilter(cat)}
-                className={`px-6 py-2.5 rounded-full text-[11px] font-bold uppercase tracking-widest transition-all border ${
-                  filter === cat 
-                  ? 'bg-accent border-accent text-white shadow-[0_10px_20px_rgba(255,82,82,0.2)]' 
-                  : 'bg-white dark:bg-white/5 border-gray-100 dark:border-white/10 text-gray-500 hover:text-gray-900 dark:hover:text-white'
-                }`}
-              >
-                {cat}
-              </button>
-            ))}
+        {/* Advanced Filter UI - Multi Select */}
+        <div className="mb-20 space-y-8 bg-white/5 p-8 rounded-[40px] border border-white/10 backdrop-blur-xl">
+          <div className="space-y-4">
+            <h4 className="text-[10px] uppercase tracking-[0.4em] text-gray-500 font-bold">Categories</h4>
+            <div className="flex flex-wrap justify-center gap-2">
+              {categories.map(cat => (
+                <button 
+                  key={cat}
+                  onClick={() => toggleCategory(cat)}
+                  className={`px-6 py-2.5 rounded-full text-[11px] font-bold uppercase tracking-widest transition-all border ${
+                    activeCategories.includes(cat)
+                    ? 'bg-accent border-accent text-white shadow-[0_10px_20px_rgba(255,82,82,0.2)]' 
+                    : 'bg-white dark:bg-white/5 border-gray-100 dark:border-white/10 text-gray-500 hover:text-gray-900 dark:hover:text-white'
+                  }`}
+                >
+                  {cat}
+                </button>
+              ))}
+            </div>
           </div>
           
-          <div className="flex flex-wrap justify-center gap-2 max-w-4xl mx-auto">
-            {allTech.map(t => (
-              <button 
-                key={t}
-                onClick={() => setFilter(t)}
-                className={`px-4 py-1.5 rounded-xl text-[10px] font-bold uppercase tracking-wider transition-all border ${
-                  filter === t 
-                  ? 'bg-accent/10 border-accent/30 text-accent' 
-                  : 'bg-transparent border-gray-100 dark:border-white/5 text-gray-400 hover:border-accent/20'
-                }`}
-              >
-                #{t}
-              </button>
-            ))}
+          <div className="space-y-4">
+            <h4 className="text-[10px] uppercase tracking-[0.4em] text-gray-500 font-bold">Technologies</h4>
+            <div className="flex flex-wrap justify-center gap-2 max-w-4xl mx-auto">
+              {allTech.map(t => (
+                <button 
+                  key={t}
+                  onClick={() => toggleTech(t)}
+                  className={`px-4 py-1.5 rounded-xl text-[10px] font-bold uppercase tracking-wider transition-all border ${
+                    activeTech.includes(t) 
+                    ? 'bg-accent/20 border-accent/40 text-accent' 
+                    : 'bg-transparent border-gray-100 dark:border-white/5 text-gray-400 hover:border-accent/20'
+                  }`}
+                >
+                  {t}
+                </button>
+              ))}
+            </div>
+            {activeTech.length > 0 && (
+               <button 
+                onClick={() => setActiveTech([])}
+                className="text-[9px] uppercase tracking-widest text-accent font-bold mt-4 hover:underline"
+               >
+                 Clear all tech filters
+               </button>
+            )}
           </div>
         </div>
 
@@ -551,9 +622,13 @@ const Projects = ({ projects: liveProjects }: { projects: any[] }) => {
                 initial={{ opacity: 0, scale: 0.9 }}
                 animate={{ opacity: 1, scale: 1 }}
                 exit={{ opacity: 0, scale: 0.9 }}
-                whileHover={{ y: -12, scale: 1.02 }}
+                whileHover={{ 
+                  y: -12, 
+                  scale: 1.02,
+                  boxShadow: "0 40px 80px rgba(255, 82, 82, 0.15)"
+                }}
                 onClick={() => setSelectedProject(project)}
-                className="glass-card overflow-hidden flex flex-col items-start p-8 text-left cursor-pointer group shadow-sm hover:shadow-2xl hover:shadow-accent/10 transition-shadow duration-500"
+                className="glass-card overflow-hidden flex flex-col items-start p-8 text-left cursor-pointer group shadow-sm transition-all duration-500"
               >
                 <div className="relative w-full rounded-2xl overflow-hidden mb-8 shadow-inner">
                   <ImageCarousel images={project.images} title={project.title} />
@@ -569,7 +644,7 @@ const Projects = ({ projects: liveProjects }: { projects: any[] }) => {
                     {project.title}
                   </h3>
                   <div className="text-[10px] font-mono font-bold text-gray-400 bg-white/5 px-2 py-1 rounded border border-white/5">
-                    0{filteredProjects.indexOf(project) + 1}
+                    0{projects.indexOf(project) + 1}
                   </div>
                 </div>
                 
@@ -582,9 +657,9 @@ const Projects = ({ projects: liveProjects }: { projects: any[] }) => {
                   {project.tech.map((t: string) => (
                     <button 
                       key={t} 
-                      onClick={(e) => { e.stopPropagation(); setFilter(t); }}
+                      onClick={(e) => { e.stopPropagation(); toggleTech(t); }}
                       className={`px-3 py-1 rounded-lg text-[9px] font-bold uppercase tracking-wider transition-all border ${
-                        filter === t 
+                        activeTech.includes(t) 
                         ? 'bg-accent/20 border-accent/40 text-accent' 
                         : 'bg-white/5 dark:bg-white/5 border-transparent text-gray-500 hover:border-white/10'
                       }`}
@@ -815,30 +890,42 @@ const Testimonials = () => {
 const Contact = () => {
   const [formData, setFormData] = useState({ name: '', email: '', message: '' });
   const [errors, setErrors] = useState<any>({});
+  const [touched, setTouched] = useState<any>({});
   const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
 
-  const validate = () => {
+  const validate = (data = formData) => {
     const newErrors: any = {};
-    if (!formData.name.trim()) newErrors.name = "Name is required";
-    if (!formData.email.trim()) newErrors.email = "Email is required";
-    else if (!/^\S+@\S+\.\S+$/.test(formData.email)) newErrors.email = "Invalid email format";
-    if (!formData.message.trim()) newErrors.message = "Message cannot be empty";
+    if (!data.name.trim()) newErrors.name = "Name is required";
+    if (!data.email.trim()) newErrors.email = "Email is required";
+    else if (!/^\S+@\S+\.\S+$/.test(data.email)) newErrors.email = "Invalid email format";
+    if (!data.message.trim()) newErrors.message = "Message cannot be empty";
     return newErrors;
   };
 
+  useEffect(() => {
+    if (Object.keys(touched).length > 0) {
+      setErrors(validate());
+    }
+  }, [formData, touched]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setTouched({ name: true, email: true, message: true });
     const newErrors = validate();
     setErrors(newErrors);
 
     if (Object.keys(newErrors).length === 0) {
       setStatus('loading');
-      // Simulate real API integration
       await new Promise(resolve => setTimeout(resolve, 2000));
       setStatus('success');
       setFormData({ name: '', email: '', message: '' });
+      setTouched({});
       setTimeout(() => setStatus('idle'), 5000);
     }
+  };
+
+  const handleBlur = (field: string) => {
+    setTouched({ ...touched, [field]: true });
   };
 
   return (
@@ -883,13 +970,13 @@ const Contact = () => {
                       type="text" 
                       placeholder="e.g. John Doe" 
                       value={formData.name}
+                      onBlur={() => handleBlur('name')}
                       onChange={(e) => {
                         setFormData({...formData, name: e.target.value});
-                        if (errors.name) setErrors({...errors, name: null});
                       }}
-                      className={`w-full px-6 py-4 rounded-2xl bg-white dark:bg-black/40 border ${errors.name ? 'border-red-500 focus:border-red-500' : 'border-gray-200 dark:border-white/10'} text-gray-900 dark:text-white placeholder:text-gray-400 focus:outline-hidden focus:border-accent transition-all text-sm`} 
+                      className={`w-full px-6 py-4 rounded-2xl bg-white dark:bg-black/40 border ${touched.name && errors.name ? 'border-red-500 focus:border-red-500' : 'border-gray-200 dark:border-white/10'} text-gray-900 dark:text-white placeholder:text-gray-400 focus:outline-hidden focus:border-accent transition-all text-sm`} 
                     />
-                    {errors.name && <p className="text-[10px] text-red-500 font-bold mt-1 ml-2 uppercase tracking-wider">{errors.name}</p>}
+                    {touched.name && errors.name && <p className="text-[10px] text-red-500 font-bold mt-1 ml-2 uppercase tracking-wider">{errors.name}</p>}
                   </div>
                   <div className="space-y-2">
                     <label className="text-[10px] uppercase tracking-widest font-bold text-gray-400 ml-2">Email Address</label>
@@ -897,13 +984,13 @@ const Contact = () => {
                       type="email" 
                       placeholder="e.g. john@example.com" 
                       value={formData.email}
+                      onBlur={() => handleBlur('email')}
                       onChange={(e) => {
                         setFormData({...formData, email: e.target.value});
-                        if (errors.email) setErrors({...errors, email: null});
                       }}
-                      className={`w-full px-6 py-4 rounded-2xl bg-white dark:bg-black/40 border ${errors.email ? 'border-red-500 focus:border-red-500' : 'border-gray-200 dark:border-white/10'} text-gray-900 dark:text-white placeholder:text-gray-400 focus:outline-hidden focus:border-accent transition-all text-sm`} 
+                      className={`w-full px-6 py-4 rounded-2xl bg-white dark:bg-black/40 border ${touched.email && errors.email ? 'border-red-500 focus:border-red-500' : 'border-gray-200 dark:border-white/10'} text-gray-900 dark:text-white placeholder:text-gray-400 focus:outline-hidden focus:border-accent transition-all text-sm`} 
                     />
-                    {errors.email && <p className="text-[10px] text-red-500 font-bold mt-1 ml-2 uppercase tracking-wider">{errors.email}</p>}
+                    {touched.email && errors.email && <p className="text-[10px] text-red-500 font-bold mt-1 ml-2 uppercase tracking-wider">{errors.email}</p>}
                   </div>
                 </div>
                 <div className="space-y-2">
@@ -912,13 +999,13 @@ const Contact = () => {
                     rows={4} 
                     placeholder="Tell me about your project..." 
                     value={formData.message}
+                    onBlur={() => handleBlur('message')}
                     onChange={(e) => {
                       setFormData({...formData, message: e.target.value});
-                      if (errors.message) setErrors({...errors, message: null});
                     }}
-                    className={`w-full px-6 py-4 rounded-2xl bg-white dark:bg-black/40 border ${errors.message ? 'border-red-500 focus:border-red-500' : 'border-gray-200 dark:border-white/10'} text-gray-900 dark:text-white placeholder:text-gray-400 focus:outline-hidden focus:border-accent transition-all text-sm resize-none`} 
+                    className={`w-full px-6 py-4 rounded-2xl bg-white dark:bg-black/40 border ${touched.message && errors.message ? 'border-red-500 focus:border-red-500' : 'border-gray-200 dark:border-white/10'} text-gray-900 dark:text-white placeholder:text-gray-400 focus:outline-hidden focus:border-accent transition-all text-sm resize-none`} 
                   />
-                  {errors.message && <p className="text-[10px] text-red-500 font-bold mt-1 ml-2 uppercase tracking-wider">{errors.message}</p>}
+                  {touched.message && errors.message && <p className="text-[10px] text-red-500 font-bold mt-1 ml-2 uppercase tracking-wider">{errors.message}</p>}
                 </div>
                 <button 
                   disabled={status === 'loading'}
