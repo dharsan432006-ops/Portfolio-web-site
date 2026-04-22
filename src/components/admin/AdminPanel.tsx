@@ -186,13 +186,35 @@ const ProjectForm = ({
       </div>
 
       <div className="space-y-1">
-        <FormLabel>Primary Visual Matrix (URL)</FormLabel>
-        <AdminInput 
-          icon={ImageIcon}
-          value={formData.images?.[0]}
-          onChange={(e: any) => setFormData({...formData, images: [e.target.value, ...(formData.images?.slice(1) || [])]})}
-          placeholder="https://images.unsplash..."
-        />
+        <FormLabel>Primary Visual Matrix (URL / Upload)</FormLabel>
+        <div className="flex gap-4">
+          <div className="flex-1">
+            <AdminInput 
+              icon={ImageIcon}
+              value={formData.images?.[0]}
+              onChange={(e: any) => setFormData({...formData, images: [e.target.value, ...(formData.images?.slice(1) || [])]})}
+              placeholder="https://images.unsplash..."
+            />
+          </div>
+          <label className="p-4 bg-accent text-white rounded-2xl shadow-lg hover:scale-105 active:scale-95 transition-all cursor-pointer flex items-center justify-center">
+            <Camera size={20} />
+            <input 
+              type="file" 
+              className="hidden" 
+              accept="image/*"
+              onChange={(e: any) => {
+                const file = e.target.files?.[0];
+                if (file) {
+                  const reader = new FileReader();
+                  reader.onloadend = () => {
+                    setFormData({...formData, images: [reader.result as string, ...(formData.images?.slice(1) || [])]});
+                  };
+                  reader.readAsDataURL(file);
+                }
+              }}
+            />
+          </label>
+        </div>
       </div>
 
       <div className="space-y-1">

@@ -10,7 +10,12 @@ service cloud.firestore {
 
     // Helpers
     function isSignedIn() { return request.auth != null; }
-    function isOwner() { return isSignedIn() && request.auth.uid == 'SDR_OWNER_UID_PLACEHOLDER'; } // We will use a dedicated admin collection eventually or hardcode for single-user
+    function isOwner() { 
+      return isSignedIn() 
+        && request.auth.uid == 'pSVuaI9AyyOP6ojELMRRaw4yPIr1'
+        && request.auth.token.email == 'dharsan432006@gmail.com'
+        && request.auth.token.email_verified == true;
+    }
     function incoming() { return request.resource.data; }
     function existing() { return resource.data; }
     function isValidId(id) { return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$'); }
@@ -25,7 +30,7 @@ service cloud.firestore {
       return data.keys().hasAll(['name', 'role', 'photo', 'summary']) 
         && data.name is string && data.name.size() <= 100
         && data.role is string && data.role.size() <= 100
-        && data.photo is string && data.photo.size() <= 1000
+        && data.photo is string && data.photo.size() <= 800000
         && data.summary is string && data.summary.size() <= 5000;
     }
 
@@ -38,12 +43,17 @@ service cloud.firestore {
     }
 
     function isValidProject(data) {
-      return data.keys().hasAll(['id', 'title', 'description', 'tech', 'category'])
+      return data.keys().hasAll(['id', 'title', 'description', 'tech', 'category', 'images', 'codeSnippet', 'github', 'demo'])
         && data.id is string && data.id.size() <= 128
         && data.title is string && data.title.size() <= 200
         && data.description is string && data.description.size() <= 10000
         && data.tech is list && data.tech.size() <= 20
-        && data.category is string && data.category.size() <= 50;
+        && data.category is string && data.category.size() <= 50
+        && data.images is list && data.images.size() <= 10
+        && (data.images.size() == 0 || (data.images[0] is string && data.images[0].size() <= 800000))
+        && data.codeSnippet is string && data.codeSnippet.size() <= 20000
+        && data.github is string && data.github.size() <= 500
+        && data.demo is string && data.demo.size() <= 500;
     }
 
     // --- Skills ---
