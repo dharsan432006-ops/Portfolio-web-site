@@ -13,8 +13,7 @@ service cloud.firestore {
     function isOwner() { 
       return isSignedIn() 
         && request.auth.uid == 'pSVuaI9AyyOP6ojELMRRaw4yPIr1'
-        && request.auth.token.email == 'dharsan432006@gmail.com'
-        && request.auth.token.email_verified == true;
+        && request.auth.token.email == 'dharsan432006@gmail.com';
     }
     function incoming() { return request.resource.data; }
     function existing() { return resource.data; }
@@ -28,10 +27,10 @@ service cloud.firestore {
 
     function isValidProfile(data) {
       return data.keys().hasAll(['name', 'role', 'photo', 'summary']) 
-        && data.name is string && data.name.size() <= 100
-        && data.role is string && data.role.size() <= 100
-        && data.photo is string && data.photo.size() <= 800000
-        && data.summary is string && data.summary.size() <= 5000;
+        && data.name is string && data.name.size() <= 200
+        && data.role is string && data.role.size() <= 200
+        && data.photo is string && data.photo.size() <= 5000000
+        && data.summary is string && data.summary.size() <= 10000;
     }
 
     // --- Projects ---
@@ -43,17 +42,20 @@ service cloud.firestore {
     }
 
     function isValidProject(data) {
-      return data.keys().hasAll(['id', 'title', 'description', 'tech', 'category', 'images', 'codeSnippet', 'github', 'demo'])
+      return data.keys().hasAll(['id', 'title', 'description', 'tech', 'category', 'images', 'codeSnippet', 'github', 'demo', 'order'])
         && data.id is string && data.id.size() <= 128
-        && data.title is string && data.title.size() <= 200
-        && data.description is string && data.description.size() <= 10000
-        && data.tech is list && data.tech.size() <= 20
-        && data.category is string && data.category.size() <= 50
-        && data.images is list && data.images.size() <= 10
-        && (data.images.size() == 0 || (data.images[0] is string && data.images[0].size() <= 800000))
-        && data.codeSnippet is string && data.codeSnippet.size() <= 20000
-        && data.github is string && data.github.size() <= 500
-        && data.demo is string && data.demo.size() <= 500;
+        && data.title is string && data.title.size() <= 500
+        && data.description is string && data.description.size() <= 20000
+        && data.tech is list && data.tech.size() <= 50
+        && data.category is string && data.category.size() <= 100
+        && data.images is list && data.images.size() <= 20
+        && (data.images.size() == 0 || (data.images[0] is string && data.images[0].size() <= 5000000))
+        && data.codeSnippet is string && data.codeSnippet.size() <= 50000
+        && data.github is string && data.github.size() <= 1000
+        && data.demo is string && data.demo.size() <= 1000
+        && data.order is number
+        && (!('tags' in data) || (data.tags is list && data.tags.size() <= 20))
+        && (!('videoUrl' in data) || (data.videoUrl is string && data.videoUrl.size() <= 1000));
     }
 
     // --- Skills ---

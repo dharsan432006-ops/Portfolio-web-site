@@ -19,12 +19,14 @@ interface Project {
   title: string;
   description: string;
   tech: string[];
+  tags: string[];
   github: string;
   demo: string;
   category: string;
   images: string[];
   codeSnippet: string;
-  order?: number;
+  order: number;
+  videoUrl?: string;
 }
 
 interface Profile {
@@ -53,7 +55,7 @@ const AdminModal = ({ isOpen, onClose, title, children }: { isOpen: boolean; onC
         >
           <div className="p-8 border-b border-white/5 flex items-center justify-between bg-white/[0.02]">
             <div>
-                <span className="text-[10px] font-mono font-bold text-accent uppercase tracking-widest block mb-1">Subsystem: Operational</span>
+                <span className="text-[10px] font-mono font-bold text-accent uppercase tracking-widest block mb-1">System Status: Active</span>
                 <h3 className="text-xl font-display font-bold text-white tracking-tight">{title}</h3>
             </div>
             <button onClick={onClose} className="p-3 hover:bg-white/5 rounded-full transition-all text-white border border-white/5">
@@ -70,7 +72,7 @@ const AdminModal = ({ isOpen, onClose, title, children }: { isOpen: boolean; onC
 );
 
 const FormLabel = ({ children }: { children: React.ReactNode }) => (
-    <label className="block text-[10px] font-mono font-bold text-gray-500 uppercase tracking-[0.2em] mb-3 ml-1 italic">{children}</label>
+    <label className="block text-[10px] font-mono font-bold text-gray-500 uppercase tracking-[0.2em] mb-3 ml-1">{children}</label>
 );
 
 const AdminInput = ({ icon: Icon, ...props }: any) => (
@@ -97,43 +99,76 @@ const ProjectForm = ({
   const [formData, setFormData] = useState<Partial<Project>>(project || {
     title: '',
     description: '',
-    category: 'AI',
+    category: 'Web',
     tech: [],
+    tags: [],
     github: '',
     demo: '#',
-    images: [''],
-    codeSnippet: ''
+    images: [],
+    codeSnippet: '',
+    order: 0,
+    videoUrl: ''
   });
 
   const [techInput, setTechInput] = useState(formData.tech?.join(', ') || '');
+  const [tagsInput, setTagsInput] = useState(formData.tags?.join(', ') || '');
+  const [uploading, setUploading] = useState(false);
+
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setUploading(true);
+    try {
+      const { uploadImage } = await import('../../lib/firebase.ts');
+      const url = await uploadImage(file);
+      setFormData(prev => ({
+        ...prev,
+        images: [...(prev.images || []), url]
+      }));
+    } catch (error) {
+      console.error(error);
+      alert('Upload failed');
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const removeImage = (idx: number) => {
+    setFormData(prev => ({
+      ...prev,
+      images: prev.images?.filter((_, i) => i !== idx)
+    }));
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     const techArray = techInput.split(',').map(s => s.trim()).filter(Boolean);
-    onSave({ ...formData, tech: techArray });
+    const tagsArray = tagsInput.split(',').map(s => s.trim()).filter(Boolean);
+    onSave({ ...formData, tech: techArray, tags: tagsArray });
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-10">
+    <form onSubmit={handleSubmit} className="space-y-8">
       <div className="grid grid-cols-2 gap-6">
         <div className="space-y-1">
-          <FormLabel>Module Title</FormLabel>
+          <FormLabel>Project Title</FormLabel>
           <AdminInput 
             value={formData.title}
             onChange={(e: any) => setFormData({...formData, title: e.target.value})}
-            placeholder="Neural Nexus..."
+            placeholder="Project name..."
             required
           />
         </div>
         <div className="space-y-1">
-          <FormLabel>Tier Classification</FormLabel>
+          <FormLabel>Category</FormLabel>
           <div className="relative">
               <select 
                 value={formData.category}
                 onChange={e => setFormData({...formData, category: e.target.value})}
                 className="w-full bg-white/[0.02] border border-white/10 rounded-2xl px-6 py-4 text-sm text-white focus:border-accent/40 focus:bg-white/[0.04] outline-none transition-all appearance-none cursor-pointer"
               >
-                {['AI', 'Web', 'Mobile', 'Tools', 'Blockchain', 'Creative'].map(cat => (
+                {['Web', 'Mobile', 'AI', 'Cloud', 'Open Source'].map(cat => (
                   <option key={cat} value={cat} className="bg-[#0f0f12]">{cat}</option>
                 ))}
               </select>
@@ -143,106 +178,118 @@ const ProjectForm = ({
       </div>
 
       <div className="space-y-1">
-        <FormLabel>Documentation / Overview</FormLabel>
+        <FormLabel>Description</FormLabel>
         <textarea 
           required
-          rows={6}
+          rows={4}
           value={formData.description}
           onChange={e => setFormData({...formData, description: e.target.value})}
-          placeholder="Enter project metrics and architectural overview..."
-          className="w-full bg-white/[0.02] border border-white/10 rounded-[32px] px-8 py-6 text-sm text-gray-300 focus:border-accent/40 focus:bg-white/[0.04] outline-none transition-all resize-none placeholder:text-gray-700"
-        />
-      </div>
-
-      <div className="space-y-1">
-        <FormLabel>Logic Libraries (Separated by Comma)</FormLabel>
-        <AdminInput 
-          icon={Layers}
-          value={techInput}
-          onChange={(e: any) => setTechInput(e.target.value)}
-          placeholder="React, PyTorch..."
+          placeholder="Professional overview of the project..."
+          className="w-full bg-white/[0.02] border border-white/10 rounded-[28px] px-8 py-6 text-sm text-gray-300 focus:border-accent/40 focus:bg-white/[0.04] outline-none transition-all resize-none placeholder:text-gray-700"
         />
       </div>
 
       <div className="grid grid-cols-2 gap-6">
         <div className="space-y-1">
-          <FormLabel>Source Control</FormLabel>
+          <FormLabel>Technologies (Comma separated)</FormLabel>
+          <AdminInput 
+            icon={Layers}
+            value={techInput}
+            onChange={(e: any) => setTechInput(e.target.value)}
+            placeholder="React, Firebase..."
+          />
+        </div>
+        <div className="space-y-1">
+          <FormLabel>Tags (Comma separated)</FormLabel>
+          <AdminInput 
+            icon={Plus}
+            value={tagsInput}
+            onChange={(e: any) => setTagsInput(e.target.value)}
+            placeholder="Fintech, SaaS..."
+          />
+        </div>
+      </div>
+
+      <div className="grid grid-cols-2 gap-6">
+        <div className="space-y-1">
+          <FormLabel>GitHub URL</FormLabel>
           <AdminInput 
             icon={GithubIcon}
             value={formData.github}
             onChange={(e: any) => setFormData({...formData, github: e.target.value})}
-            placeholder="github.com/..."
+            placeholder="https://github.com/..."
           />
         </div>
         <div className="space-y-1">
-          <FormLabel>Live Endpoint</FormLabel>
+          <FormLabel>Live Demo URL</FormLabel>
           <AdminInput 
             icon={ExternalLink}
             value={formData.demo}
             onChange={(e: any) => setFormData({...formData, demo: e.target.value})}
-            placeholder="https://..."
+            placeholder="https://example.com"
           />
         </div>
       </div>
 
       <div className="space-y-1">
-        <FormLabel>Primary Visual Matrix (URL / Upload)</FormLabel>
-        <div className="flex gap-4">
-          <div className="flex-1">
-            <AdminInput 
-              icon={ImageIcon}
-              value={formData.images?.[0]}
-              onChange={(e: any) => setFormData({...formData, images: [e.target.value, ...(formData.images?.slice(1) || [])]})}
-              placeholder="https://images.unsplash..."
-            />
-          </div>
-          <label className="p-4 bg-accent text-white rounded-2xl shadow-lg hover:scale-105 active:scale-95 transition-all cursor-pointer flex items-center justify-center">
-            <Camera size={20} />
-            <input 
-              type="file" 
-              className="hidden" 
-              accept="image/*"
-              onChange={(e: any) => {
-                const file = e.target.files?.[0];
-                if (file) {
-                  const reader = new FileReader();
-                  reader.onloadend = () => {
-                    setFormData({...formData, images: [reader.result as string, ...(formData.images?.slice(1) || [])]});
-                  };
-                  reader.readAsDataURL(file);
-                }
-              }}
-            />
+        <FormLabel>Video URL (Optional)</FormLabel>
+        <AdminInput 
+          icon={ImageIcon}
+          value={formData.videoUrl}
+          onChange={(e: any) => setFormData({...formData, videoUrl: e.target.value})}
+          placeholder="YouTube or Vimeo URL"
+        />
+      </div>
+
+      <div className="space-y-4">
+        <FormLabel>Project Gallery</FormLabel>
+        <div className="grid grid-cols-4 gap-4">
+          {formData.images?.map((url, idx) => (
+            <div key={idx} className="relative aspect-square rounded-xl overflow-hidden border border-white/10 group">
+              <img src={url} className="w-full h-full object-cover" alt="" />
+              <button 
+                type="button"
+                onClick={() => removeImage(idx)}
+                className="absolute top-2 right-2 p-1.5 bg-red-500 text-white rounded-lg opacity-0 group-hover:opacity-100 transition-opacity"
+              >
+                <X size={14} />
+              </button>
+            </div>
+          ))}
+          <label className={`aspect-square rounded-xl border-2 border-dashed border-white/10 flex flex-col items-center justify-center gap-2 cursor-pointer hover:border-accent/40 hover:bg-white/[0.02] transition-all ${uploading ? 'opacity-50 pointer-events-none' : ''}`}>
+            {uploading ? <Loader2 className="animate-spin text-accent" /> : <Plus className="text-gray-500" />}
+            <span className="text-[10px] font-bold text-gray-500 uppercase">Upload</span>
+            <input type="file" className="hidden" accept="image/*" onChange={handleImageUpload} />
           </label>
         </div>
       </div>
 
       <div className="space-y-1">
-        <FormLabel>Core Algorithm Snippet (JS/TS)</FormLabel>
+        <FormLabel>Code Implementation Snippet</FormLabel>
         <textarea 
-          rows={8}
+          rows={6}
           value={formData.codeSnippet}
           onChange={e => setFormData({...formData, codeSnippet: e.target.value})}
-          placeholder="// Paste high-impact logic here..."
-          className="w-full bg-[#08080a] border border-white/10 rounded-[32px] px-8 py-6 text-[12px] text-accent font-mono focus:border-accent/40 outline-none transition-all resize-none shadow-inner"
+          placeholder="// Optional implementation details..."
+          className="w-full bg-[#08080a] border border-white/10 rounded-[28px] px-8 py-6 text-[12px] text-accent font-mono focus:border-accent/40 outline-none transition-all resize-none shadow-inner"
         />
       </div>
 
       <div className="flex items-center gap-4 pt-8 border-t border-white/5">
         <button 
           type="submit" 
-          disabled={isLoading}
-          className="flex-1 bg-accent text-white py-5 rounded-[24px] font-bold uppercase tracking-[0.2em] text-[11px] shadow-[0_15px_30px_rgba(255,82,82,0.2)] hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center justify-center gap-3 disabled:opacity-50"
+          disabled={isLoading || uploading}
+          className="flex-1 bg-accent text-white py-5 rounded-[24px] font-bold uppercase tracking-[0.2em] text-[11px] shadow-lg hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center justify-center gap-3 disabled:opacity-50"
         >
           {isLoading ? <Loader2 size={18} className="animate-spin" /> : <Save size={18} />}
-          {project ? 'Commit Patch' : 'Execute Initialization'}
+          {project ? 'Save Changes' : 'Create Project'}
         </button>
         <button 
           type="button"
           onClick={onCancel}
           className="px-10 py-5 border border-white/10 rounded-[24px] text-gray-500 hover:text-white hover:bg-white/5 transition-all font-bold text-[11px] uppercase tracking-[0.2em]"
         >
-          Abort
+          Cancel
         </button>
       </div>
     </form>
@@ -256,6 +303,7 @@ export const AdminPanel = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<'profile' | 'projects'>('profile');
   const [loading, setLoading] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
 
   // States
   const [profile, setProfile] = useState<Profile>({
@@ -297,10 +345,10 @@ export const AdminPanel = () => {
     setLoading(true);
     try {
       await updateProfile(profile);
-      alert('SUCCESS: Global identity parameters synchronized.');
+      alert('Global identity parameters synchronized.');
     } catch (err) {
       console.error(err);
-      alert('FAULT: Authorization denied.');
+      alert('Authorization denied.');
     } finally {
       setLoading(false);
     }
@@ -320,7 +368,27 @@ export const AdminPanel = () => {
       setIsCreating(false);
     } catch (err) {
       console.error(err);
-      alert('FAULT: Write operation failed.');
+      alert('Project sync failed.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const moveProject = async (idx: number, direction: 'up' | 'down') => {
+    const targetIdx = direction === 'up' ? idx - 1 : idx + 1;
+    if (targetIdx < 0 || targetIdx >= projects.length) return;
+
+    setLoading(true);
+    try {
+      const newProjects = [...projects];
+      const [moved] = newProjects.splice(idx, 1);
+      newProjects.splice(targetIdx, 0, moved);
+      
+      // Update order field for all affected projects
+      await Promise.all(newProjects.map((p, i) => updateProject(p.id, { order: i })));
+      await loadSystemState();
+    } catch (err) {
+      console.error(err);
     } finally {
       setLoading(false);
     }
@@ -334,11 +402,16 @@ export const AdminPanel = () => {
       setIsDeleting(null);
     } catch (err) {
       console.error(err);
-      alert('FAULT: Delete operation rejected.');
+      alert('Delete operation rejected.');
     } finally {
       setLoading(false);
     }
   };
+
+  const filteredProjects = projects.filter(p => 
+    p.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    p.category.toLowerCase().includes(searchQuery.toLowerCase())
+  );
 
   if (!user) {
     return (
@@ -386,29 +459,21 @@ export const AdminPanel = () => {
               exit={{ scale: 0.98, y: 20 }}
               className="bg-[#0a0a0c] border border-white/5 w-full max-w-7xl h-[90vh] rounded-[50px] overflow-hidden flex flex-col shadow-[0_0_120px_rgba(0,0,0,0.8)]"
             >
-              {/* Architecture: Split Screen Management */}
               <div className="flex h-full overflow-hidden">
-                
-                {/* Navigation Rail - Vertical */}
+                {/* Navigation Rail */}
                 <div className="w-80 border-r border-white/5 bg-white/[0.01] p-12 flex flex-col justify-between relative overflow-hidden">
-                  <div className="absolute top-0 right-0 w-px h-full bg-linear-to-b from-transparent via-white/10 to-transparent" />
-                  
                   <div className="space-y-16">
                     <div className="pl-2">
                         <div className="text-3xl font-display font-bold text-white tracking-tighter flex items-center gap-3">
                             <span className="text-accent underline decoration-accent/20">Control</span>
                             <span className="opacity-20 italic font-serif">Center</span>
                         </div>
-                        <div className="text-[10px] font-mono text-gray-600 font-bold uppercase tracking-[0.4em] mt-4 flex items-center gap-2">
-                            <div className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse" />
-                            Secure Environment
-                        </div>
                     </div>
 
                     <nav className="space-y-3">
                       {[
-                        { id: 'profile', icon: Database, label: 'Identity Matrix' },
-                        { id: 'projects', icon: Briefcase, label: 'Project Registry' }
+                        { id: 'profile', icon: Database, label: 'Profile' },
+                        { id: 'projects', icon: Briefcase, label: 'Projects' }
                       ].map((item) => (
                         <button
                           key={item.id}
@@ -419,44 +484,33 @@ export const AdminPanel = () => {
                             : 'text-gray-500 hover:text-white hover:bg-white/[0.03]'
                           }`}
                         >
-                          <item.icon size={20} className={activeTab === item.id ? '' : 'group-hover:scale-110 transition-transform'} />
+                          <item.icon size={20} />
                           {item.label}
-                          {activeTab === item.id && (
-                              <motion.div layoutId="nav-glow" className="absolute inset-0 bg-linear-to-r from-transparent via-white/10 to-transparent pointer-events-none" />
-                          )}
                         </button>
                       ))}
                     </nav>
                   </div>
 
                   <div className="space-y-10">
-                    <div className="p-8 bg-white/[0.02] border border-white/5 rounded-[40px] flex flex-col items-center text-center shadow-inner">
-                        <div className="relative mb-4 group">
-                            <img src={user.photoURL || ''} alt="" className="w-18 h-18 rounded-full border-2 border-accent/20 group-hover:scale-105 transition-transform" />
-                            <div className="absolute -bottom-1 -right-1 w-5 h-5 bg-green-500 border-4 border-[#0a0a0c] rounded-full" />
-                        </div>
-                        <p className="text-[11px] font-bold text-white uppercase tracking-widest">{user.displayName || 'Authorized'}</p>
-                        <p className="text-[9px] text-gray-500 font-medium truncate w-full mt-2 font-mono">{user.email}</p>
+                    <div className="p-8 bg-white/[0.02] border border-white/5 rounded-[40px] flex flex-col items-center text-center">
+                        <img src={profile.photo || user.photoURL || ''} alt="" className="w-16 h-16 rounded-full border-2 border-accent/20 mb-4" />
+                        <p className="text-[11px] font-bold text-white uppercase tracking-widest">{profile.name || user.displayName || 'Admin'}</p>
                     </div>
-                    <button 
-                      onClick={logout} 
-                      className="w-full flex items-center justify-center gap-4 px-8 py-5 rounded-[28px] text-[11px] font-bold uppercase tracking-widest text-red-500/80 hover:text-red-500 hover:bg-red-500/5 transition-all border border-red-500/10"
-                    >
-                      <LogOut size={18} />
-                      Purge Session
+                    <button onClick={logout} className="w-full flex items-center justify-center gap-4 px-8 py-5 rounded-[28px] text-[11px] font-bold uppercase tracking-widest text-red-500 hover:bg-red-500/5 transition-all border border-red-500/10">
+                      <LogOut size={18} /> Logout
                     </button>
                   </div>
                 </div>
 
-                {/* Dashboard Viewport */}
+                {/* Main Content */}
                 <div className="flex-1 flex flex-col bg-linear-to-br from-transparent via-white/[0.01] to-transparent">
                   <header className="p-12 pb-6 flex justify-between items-center">
                     <div className="space-y-1">
                         <div className="flex items-center gap-3">
                             <h1 className="text-4xl font-display font-bold text-white capitalize tracking-tighter">{activeTab}</h1>
-                            <span className="px-3 py-1 bg-white/5 rounded text-[9px] font-mono text-gray-500 uppercase tracking-widest">Live</span>
+                            {loading && <Loader2 className="animate-spin text-accent" size={20} />}
                         </div>
-                        <p className="text-gray-600 text-sm italic font-serif">Synchronizing live data with operational parameters.</p>
+                        <p className="text-gray-600 text-sm italic font-serif">System states and deployment management.</p>
                     </div>
                     <button onClick={() => setIsOpen(false)} className="p-4 bg-white/[0.02] hover:bg-white/[0.05] rounded-full transition-all text-white border border-white/5 shadow-lg">
                       <X size={24} />
@@ -466,142 +520,91 @@ export const AdminPanel = () => {
                   <main className="flex-1 overflow-y-auto p-12 pt-6 custom-scrollbar">
                     {activeTab === 'profile' && (
                       <motion.div initial={{ opacity: 0, scale: 0.98 }} animate={{ opacity: 1, scale: 1 }}>
-                        <form onSubmit={handleProfileUpdate} className="max-w-3xl space-y-12">
-                          <div className="flex items-start gap-12 bg-white/[0.01] p-10 rounded-[50px] border border-white/5 shadow-inner">
+                        <form onSubmit={handleProfileUpdate} className="max-w-3xl space-y-10">
+                          <div className="flex items-start gap-10 bg-white/[0.01] p-10 rounded-[50px] border border-white/5">
                             <div className="relative group">
-                              <div className="w-48 h-48 rounded-[44px] overflow-hidden border border-white/10 bg-[#0f0f12] relative shadow-2xl">
+                              <div className="w-40 h-40 rounded-[44px] overflow-hidden border border-white/10 bg-[#0f0f12] relative shadow-2xl">
                                 {profile.photo ? (
-                                    <img src={profile.photo} alt="Profile" className="w-full h-full object-cover transition-transform group-hover:scale-110 duration-1000" />
+                                    <img src={profile.photo} alt="Profile" className="w-full h-full object-cover" />
                                 ) : (
-                                    <div className="w-full h-full flex items-center justify-center text-gray-800"><Camera size={60} /></div>
+                                    <div className="w-full h-full flex items-center justify-center text-gray-800"><Camera size={50} /></div>
                                 )}
-                                <div className="absolute inset-0 bg-accent/20 opacity-0 group-hover:opacity-100 transition-opacity" />
                               </div>
-                              <label className="absolute -bottom-4 -right-4 p-5 bg-accent text-white rounded-[24px] shadow-2xl hover:scale-110 active:scale-95 transition-all cursor-pointer">
-                                <Camera size={20} />
-                                <input 
-                                  type="file" 
-                                  className="hidden" 
-                                  accept="image/*"
-                                  onChange={(e: any) => {
-                                    const file = e.target.files?.[0];
-                                    if (file) {
-                                      const reader = new FileReader();
-                                      reader.onloadend = () => {
-                                        setProfile({...profile, photo: reader.result as string});
-                                      };
-                                      reader.readAsDataURL(file);
+                              <label className="absolute -bottom-2 -right-2 p-4 bg-accent text-white rounded-[20px] shadow-2xl hover:scale-110 transition-all cursor-pointer">
+                                <Camera size={18} />
+                                <input type="file" className="hidden" accept="image/*" onChange={async (e) => {
+                                  const file = e.target.files?.[0];
+                                  if (file) {
+                                    setLoading(true);
+                                    try {
+                                      const { uploadImage } = await import('../../lib/firebase.ts');
+                                      const url = await uploadImage(file, 'profile');
+                                      setProfile({...profile, photo: url});
+                                    } finally {
+                                      setLoading(false);
                                     }
-                                  }}
-                                />
+                                  }
+                                }} />
                               </label>
                             </div>
-                            <div className="flex-1 space-y-8 pt-4">
+                            <div className="flex-1 space-y-6 pt-2">
                               <div className="space-y-2">
-                                <FormLabel>Global Alias</FormLabel>
-                                <AdminInput 
-                                  value={profile.name}
-                                  onChange={(e: any) => setProfile({...profile, name: e.target.value})}
-                                  placeholder="Full Name"
-                                />
+                                <FormLabel>Full Name</FormLabel>
+                                <AdminInput value={profile.name} onChange={(e: any) => setProfile({...profile, name: e.target.value})} placeholder="Display Name" />
                               </div>
                               <div className="space-y-2">
-                                <FormLabel>Operational Role</FormLabel>
-                                <AdminInput 
-                                  value={profile.role}
-                                  onChange={(e: any) => setProfile({...profile, role: e.target.value})}
-                                  placeholder="Software Engineer..."
-                                />
+                                <FormLabel>Role</FormLabel>
+                                <AdminInput value={profile.role} onChange={(e: any) => setProfile({...profile, role: e.target.value})} placeholder="Professional Title" />
                               </div>
                             </div>
                           </div>
 
                           <div className="space-y-2">
-                            <FormLabel>Professional Narrative / Bio</FormLabel>
-                            <textarea 
-                              rows={7}
-                              value={profile.summary}
-                              onChange={e => setProfile({...profile, summary: e.target.value})}
-                              placeholder="Describe your architectural journey..."
-                              className="w-full bg-white/[0.01] border border-white/5 rounded-[40px] px-10 py-8 text-sm text-gray-300 focus:border-accent/30 focus:bg-white/[0.03] outline-none transition-all resize-none placeholder:text-gray-800" 
-                            />
+                            <FormLabel>Short Bio</FormLabel>
+                            <textarea rows={5} value={profile.summary} onChange={e => setProfile({...profile, summary: e.target.value})} placeholder="Professional summary..." className="w-full bg-white/[0.01] border border-white/5 rounded-[30px] px-8 py-6 text-sm text-gray-300 focus:border-accent/30 outline-none transition-all resize-none" />
                           </div>
 
-                          <div className="space-y-2">
-                            <FormLabel>Visual CDN Route (Avatar)</FormLabel>
-                            <AdminInput 
-                                icon={ImageIcon}
-                                value={profile.photo}
-                                onChange={(e: any) => setProfile({...profile, photo: e.target.value})}
-                                placeholder="https://..."
-                            />
-                          </div>
-
-                          <button 
-                            type="submit" 
-                            disabled={loading}
-                            className="bg-white text-black px-14 py-6 rounded-[30px] font-bold uppercase tracking-[0.2em] text-[11px] hover:bg-accent hover:text-white transition-all transform hover:-translate-y-2 shadow-2xl flex items-center gap-4 disabled:opacity-50"
-                          >
-                            {loading ? <Loader2 size={20} className="animate-spin" /> : <Save size={20} />}
-                            Synchronize Matrix
+                          <button type="submit" disabled={loading} className="bg-white text-black px-12 py-5 rounded-[24px] font-bold uppercase tracking-[0.2em] text-[10px] hover:bg-accent hover:text-white transition-all shadow-xl flex items-center gap-3">
+                            {loading ? <Loader2 size={18} className="animate-spin" /> : <Save size={18} />} Save Matrix
                           </button>
                         </form>
                       </motion.div>
                     )}
 
                     {activeTab === 'projects' && (
-                      <motion.div initial={{ opacity: 0, x: 30 }} animate={{ opacity: 1, x: 0 }} className="space-y-12">
-                        <div className="flex justify-between items-center bg-white/[0.02] p-10 rounded-[50px] border border-white/5 shadow-inner">
-                          <div>
-                            <h3 className="text-white font-bold text-2xl tracking-tight">System Registry</h3>
-                            <p className="text-gray-600 text-sm mt-2 italic font-serif">Deployment logs and prototype configuration.</p>
+                      <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} className="space-y-10">
+                        <div className="flex flex-col md:flex-row gap-6 justify-between items-center bg-white/[0.02] p-8 rounded-[40px] border border-white/5">
+                          <div className="flex-1 w-full max-w-md">
+                            <AdminInput 
+                              placeholder="Search project registry..." 
+                              value={searchQuery}
+                              onChange={(e: any) => setSearchQuery(e.target.value)}
+                            />
                           </div>
-                          <button 
-                            onClick={() => setIsCreating(true)}
-                            className="flex items-center gap-4 px-10 py-5 bg-accent text-white rounded-[28px] hover:scale-105 active:scale-95 transition-all shadow-[0_20px_40px_rgba(255,82,82,0.3)] font-bold text-[11px] uppercase tracking-[0.3em]"
-                          >
-                            <Plus size={20} /> Initialize New
+                          <button onClick={() => setIsCreating(true)} className="flex items-center gap-3 px-8 py-4 bg-accent text-white rounded-[24px] hover:scale-105 transition-all shadow-lg font-bold text-[10px] uppercase tracking-[0.2em]">
+                            <Plus size={18} /> Add New Project
                           </button>
                         </div>
 
-                        <div className="grid grid-cols-1 gap-6">
-                          {projects.map((proj, idx) => (
-                            <motion.div 
-                                key={proj.id} 
-                                layout
-                                className="p-10 bg-white/[0.01] border border-white/5 rounded-[50px] flex items-center justify-between group hover:border-accent/20 hover:bg-white/[0.03] transition-all relative overflow-hidden"
-                            >
-                              <div className="absolute top-10 left-10 opacity-5 pointer-events-none">
-                                  <span className="text-7xl font-mono font-black text-white italic">{idx + 1}</span>
-                              </div>
-                              <div className="flex items-center gap-10 relative z-10">
-                                <div className="w-28 h-28 rounded-[40px] overflow-hidden bg-white/5 border border-white/10 relative shadow-2xl">
-                                    <img src={proj.images[0]} className="w-full h-full object-cover opacity-60 group-hover:opacity-100 transition-all duration-1000 group-hover:scale-110" alt="" />
-                                    <div className="absolute inset-0 bg-linear-to-t from-accent/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                        <div className="grid grid-cols-1 gap-4">
+                          {filteredProjects.map((proj, idx) => (
+                            <motion.div key={proj.id} layout className="p-8 bg-white/[0.01] border border-white/5 rounded-[40px] flex items-center justify-between group hover:bg-white/[0.03] transition-all">
+                              <div className="flex items-center gap-8">
+                                <div className="flex flex-col gap-1 items-center mr-2">
+                                  <button onClick={() => moveProject(idx, 'up')} className="p-1 hover:text-accent transition-colors"><ChevronRight className="-rotate-90" size={16} /></button>
+                                  <button onClick={() => moveProject(idx, 'down')} className="p-1 hover:text-accent transition-colors"><ChevronRight className="rotate-90" size={16} /></button>
                                 </div>
-                                <div className="space-y-4">
-                                  <h4 className="text-2xl font-bold text-white group-hover:text-accent transition-colors tracking-tighter">{proj.title}</h4>
-                                  <div className="flex flex-wrap gap-2">
-                                     <span className="text-[10px] font-mono font-bold text-gray-500 uppercase px-4 py-1.5 bg-white/5 rounded-xl border border-white/5">{proj.category}</span>
-                                     <span className="text-[10px] font-mono font-bold text-accent uppercase px-4 py-1.5 bg-accent/5 rounded-xl border border-accent/10">{proj.tech.slice(0, 3).join(' • ')} {proj.tech.length > 3 ? `+${proj.tech.length - 3}` : ''}</span>
-                                  </div>
+                                <div className="w-20 h-20 rounded-[28px] overflow-hidden bg-white/5 border border-white/10 relative">
+                                    <img src={proj.images[0] || ''} className="w-full h-full object-cover opacity-60 group-hover:opacity-100 transition-all" alt="" />
+                                </div>
+                                <div>
+                                  <h4 className="text-xl font-bold text-white group-hover:text-accent transition-colors">{proj.title}</h4>
+                                  <p className="text-[10px] text-gray-500 font-mono mt-1 uppercase tracking-widest">{proj.category} • {proj.tech.length} Technologies</p>
                                 </div>
                               </div>
-                              <div className="flex items-center gap-4 pr-4">
-                                 <button 
-                                    onClick={() => setEditingProject(proj)}
-                                    className="p-5 bg-white/[0.02] text-gray-500 hover:text-white hover:bg-white/10 rounded-[28px] transition-all border border-white/5 shadow-lg" 
-                                    title="Edit Protocol"
-                                  >
-                                   <Edit3 size={22} />
-                                 </button>
-                                 <button 
-                                    onClick={() => setIsDeleting(proj.id)}
-                                    className="p-5 bg-white/[0.02] text-gray-500 hover:text-red-500 hover:bg-red-500/10 rounded-[28px] transition-all border border-white/5 shadow-lg" 
-                                    title="Terminate Record"
-                                  >
-                                   <Trash2 size={22} />
-                                 </button>
+                              <div className="flex items-center gap-3">
+                                 <button onClick={() => setEditingProject(proj)} className="p-4 bg-white/5 text-gray-500 hover:text-white rounded-2xl transition-all"><Edit3 size={18} /></button>
+                                 <button onClick={() => setIsDeleting(proj.id)} className="p-4 bg-white/5 text-gray-500 hover:text-red-500 rounded-2xl transition-all"><Trash2 size={18} /></button>
                               </div>
                             </motion.div>
                           ))}
@@ -616,65 +619,28 @@ export const AdminPanel = () => {
         )}
       </AnimatePresence>
 
-      {/* --- Operation Confirmations --- */}
-
-      <AdminModal 
-        isOpen={!!isDeleting} 
-        onClose={() => setIsDeleting(null)} 
-        title="Execute Purge"
-      >
-        <div className="flex flex-col items-center text-center space-y-10 py-10">
-            <div className="w-32 h-32 bg-red-500/10 rounded-[50px] flex items-center justify-center text-red-500 relative shadow-2xl">
-                <div className="absolute inset-0 bg-red-500/20 blur-3xl rounded-full animate-pulse" />
-                <AlertTriangle size={60} className="relative z-10" />
+      <AdminModal isOpen={!!isDeleting} onClose={() => setIsDeleting(null)} title="Delete Project">
+        <div className="py-10 text-center space-y-8">
+            <div className="w-24 h-24 bg-red-500/10 rounded-[40px] flex items-center justify-center text-red-500 mx-auto shadow-2xl">
+                <AlertTriangle size={48} />
             </div>
-            <div className="space-y-4">
-                <p className="text-white font-bold text-3xl tracking-tighter">Terminate Project Record?</p>
-                <p className="text-gray-500 text-base max-w-sm leading-relaxed italic font-serif">This will permanently de-fragment the project from our live registry. This action is irreversible.</p>
+            <div className="space-y-2">
+                <p className="text-white font-bold text-2xl">Permanent Deletion</p>
+                <p className="text-gray-500 text-sm italic font-serif">Remove this project record from the live database?</p>
             </div>
-            <div className="flex gap-5 w-full">
-                <button 
-                    onClick={() => isDeleting && executeDelete(isDeleting)}
-                    disabled={loading}
-                    className="flex-1 py-5 bg-red-500 text-white font-bold text-[12px] uppercase tracking-widest rounded-3xl hover:bg-red-600 transition-all shadow-xl hover:-translate-y-1 active:translate-y-0"
-                >
-                    {loading ? <Loader2 size={24} className="animate-spin mx-auto" /> : 'Execute Absolute Deletion'}
-                </button>
-                <button 
-                    onClick={() => setIsDeleting(null)}
-                    className="flex-1 py-5 bg-white/5 text-gray-500 font-bold text-[12px] uppercase tracking-widest rounded-3xl hover:bg-white/10 transition-all font-mono"
-                >
-                    Abort
-                </button>
+            <div className="flex gap-4">
+                <button onClick={() => isDeleting && executeDelete(isDeleting)} disabled={loading} className="flex-1 py-4 bg-red-500 text-white font-bold text-[11px] uppercase tracking-widest rounded-2xl">Confirm Delete</button>
+                <button onClick={() => setIsDeleting(null)} className="flex-1 py-4 bg-white/5 text-gray-500 font-bold text-[11px] uppercase tracking-widest rounded-2xl border border-white/5">Cancel</button>
             </div>
         </div>
       </AdminModal>
 
-      <AdminModal 
-        isOpen={isCreating} 
-        onClose={() => setIsCreating(false)} 
-        title="Operational initialization"
-      >
-        <ProjectForm 
-          onSave={handleProjectSync}
-          onCancel={() => setIsCreating(false)}
-          isLoading={loading}
-        />
+      <AdminModal isOpen={isCreating} onClose={() => setIsCreating(false)} title="Initialize Project">
+        <ProjectForm onSave={handleProjectSync} onCancel={() => setIsCreating(false)} isLoading={loading} />
       </AdminModal>
 
-      <AdminModal 
-        isOpen={!!editingProject} 
-        onClose={() => setEditingProject(null)} 
-        title={`Edit Config: ${editingProject?.title}`}
-      >
-        {editingProject && (
-          <ProjectForm 
-            project={editingProject}
-            onSave={handleProjectSync}
-            onCancel={() => setEditingProject(null)}
-            isLoading={loading}
-          />
-        )}
+      <AdminModal isOpen={!!editingProject} onClose={() => setEditingProject(null)} title="Modify Config">
+        {editingProject && <ProjectForm project={editingProject} onSave={handleProjectSync} onCancel={() => setEditingProject(null)} isLoading={loading} />}
       </AdminModal>
     </>
   );

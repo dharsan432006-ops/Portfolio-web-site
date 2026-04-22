@@ -26,7 +26,7 @@ import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import { Helmet, HelmetProvider } from 'react-helmet-async';
 import { PROJECTS as STATIC_PROJECTS, SKILLS, EXPERIENCE, EDUCATION, ACHIEVEMENTS, TESTIMONIALS } from './constants';
-import { getProfile, getProjects } from './lib/firebase.ts';
+import { subscribeToProfile, subscribeToProjects } from './lib/firebase.ts';
 
 const Skeleton = ({ className }: { className?: string }) => (
   <div className={`animate-pulse bg-gray-200 dark:bg-white/10 rounded-xl ${className}`} />
@@ -99,15 +99,11 @@ const Navbar = ({ theme, toggleTheme }: { theme: 'light' | 'dark', toggleTheme: 
 const Hero = ({ profile }: { profile: any }) => {
   const [stats, setStats] = useState({ repos: '12', followers: '45', stars: '180' });
 
-  useEffect(() => {
-    // Simulated fetch
-  }, []);
-
   const displayProfile = {
     name: profile?.name || 'Sudharsan',
     role: profile?.role || 'Software Engineer',
     photo: profile?.photo || 'https://github.com/dharsan432006-ops.png',
-    summary: profile?.summary || 'Building exceptional AI-powered web experiences with high-performance scalable architectures.'
+    summary: profile?.summary || 'Building high-performance applications with precision and modern technology stack.'
   };
 
   return (
@@ -120,11 +116,11 @@ const Hero = ({ profile }: { profile: any }) => {
           animate={{ opacity: 1, x: 0 }}
           className="relative"
         >
-          <div className="hello-bubble">
-            Hello! 👋
+          <div className="text-[10px] uppercase tracking-[0.3em] font-bold text-accent mb-4">
+            Available for hire
           </div>
           <h1 className="text-6xl md:text-8xl font-display font-bold text-gray-900 dark:text-white leading-[1.1] mb-6">
-            I'm <span className="text-accent underline decoration-accent/20">{displayProfile.name.split(' ')[0]}</span>, <br />
+            I'm <span className="text-accent">{displayProfile.name.split(' ')[0]}</span>, <br />
             {displayProfile.role}
           </h1>
           <p className="max-w-md text-lg text-gray-500 dark:text-gray-400 mb-10 leading-relaxed font-sans">
@@ -132,11 +128,11 @@ const Hero = ({ profile }: { profile: any }) => {
           </p>
           <div className="flex gap-4">
             <a href="#projects" className="btn-primary">
-              Portfolio <ChevronRight size={18} />
+              View Work <ChevronRight size={18} />
             </a>
-            <button onClick={() => window.open('/resume.pdf')} className="btn-secondary">
-              Download CV
-            </button>
+            <a href="#contact" className="btn-secondary">
+              Contact Me
+            </a>
           </div>
           
           <div className="mt-12 flex items-center gap-10">
@@ -186,19 +182,19 @@ const About = () => {
       <div className="max-w-6xl mx-auto px-6">
         <div className="grid md:grid-cols-2 gap-16 items-center">
           <div>
-            <span className="badge-orange mb-6 inline-block">Services</span>
+            <span className="text-[10px] items-center gap-2 bg-accent/10 text-accent px-4 py-1.5 rounded-full font-bold uppercase tracking-widest inline-flex mb-6">
+              Expertise
+            </span>
             <h2 className="text-4xl md:text-5xl font-display font-bold text-gray-900 dark:text-white mb-8 leading-tight">
-              Exceptional software <br />
-              solutions for your success.
+              Crafting solutions <br />
+              with modern technology.
             </h2>
             <p className="text-gray-500 dark:text-gray-400 font-sans leading-relaxed text-lg mb-8">
-              I am a passionate Computer Science student at SRM Institute, 
-              deeply interested in the intersection of algorithms, software engineering, 
-              and artificial intelligence. I specialize in building real-time multimodal 
-              AI systems and high-performance backend architectures.
+              Computer Science student at SRM Institute, passionate about algorithms, 
+              software engineering, and creating intuitive user experiences.
             </p>
             <div className="flex gap-4">
-              <a href="#contact" className="btn-primary !px-10">Contact Now</a>
+              <a href="#contact" className="btn-primary">Get in Touch</a>
             </div>
           </div>
           
@@ -398,6 +394,16 @@ const ProjectModal = ({ project, onClose }: { project: any, onClose: () => void 
                 </h2>
               </div>
 
+              {project.videoUrl && (
+                <div className="aspect-video w-full rounded-2xl overflow-hidden border border-white/10 shadow-2xl">
+                  <iframe 
+                    src={project.videoUrl.replace('watch?v=', 'embed/')} 
+                    className="w-full h-full"
+                    allowFullScreen
+                  />
+                </div>
+              )}
+
               <div className="prose prose-invert max-w-none">
                 <Description 
                   text={project.description} 
@@ -445,10 +451,13 @@ const ProjectModal = ({ project, onClose }: { project: any, onClose: () => void 
 
             <div className="space-y-6">
               <div className="flex items-center justify-between">
-                  <h3 className="text-[10px] font-bold text-gray-400 uppercase tracking-[0.3em] font-mono">Visual Assets Repository</h3>
-                  <span className="text-[10px] text-gray-600 font-mono italic">{project.images.length} Objects Loaded</span>
+                  <h3 className="text-[10px] font-bold text-gray-400 uppercase tracking-[0.3em] font-mono">Project Gallery</h3>
+                  <span className="text-[10px] text-gray-600 font-mono italic">{project.images.length} Assets</span>
               </div>
-              <div className="grid grid-cols-2 gap-4">
+              
+              <ImageCarousel images={project.images} title={project.title} onImageClick={(idx) => setLightboxImage(project.images[idx])} />
+
+              <div className="grid grid-cols-3 gap-4">
                 {project.images.map((img: string, idx: number) => (
                   <motion.div 
                     key={idx}
@@ -456,22 +465,29 @@ const ProjectModal = ({ project, onClose }: { project: any, onClose: () => void 
                     animate={{ opacity: 1, scale: 1 }}
                     transition={{ delay: 0.2 + idx * 0.1, duration: 0.5 }}
                     onClick={() => setLightboxImage(img)}
-                    className={`rounded-[24px] overflow-hidden bg-white/5 group/image relative border border-white/5 hover:border-accent/40 shadow-xl transition-all cursor-zoom-in ${idx === 0 ? 'col-span-2' : ''}`}
+                    className="aspect-square rounded-2xl overflow-hidden bg-white/5 border border-white/10 hover:border-accent/40 shadow-xl transition-all cursor-zoom-in group"
                   >
                     <img 
                       src={img} 
-                      alt={`${project.title} asset ${idx + 1}`} 
-                      className="w-full h-full object-cover opacity-80 group-hover/image:opacity-100 group-hover/image:scale-105 transition-all duration-700"
+                      alt="" 
+                      className="w-full h-full object-cover opacity-60 group-hover:opacity-100 transition-all duration-700"
                       referrerPolicy="no-referrer"
                       loading="lazy"
                     />
-                    <div className="absolute inset-0 bg-accent/10 opacity-0 group-hover/image:opacity-100 transition-opacity" />
-                    <div className="absolute bottom-4 right-4 p-2 bg-black/40 backdrop-blur-md rounded-lg opacity-0 group-hover/image:opacity-100 transition-all translate-x-2 group-hover:translate-x-0">
-                        <Maximize2 size={12} className="text-white" />
-                    </div>
                   </motion.div>
                 ))}
               </div>
+
+              {project.tags && project.tags.length > 0 && (
+                <div className="pt-6 border-t border-white/5">
+                  <div className="text-[10px] font-mono font-bold text-gray-500 uppercase tracking-widest mb-4">Tags</div>
+                  <div className="flex flex-wrap gap-2">
+                    {project.tags.map((tag: string) => (
+                      <span key={tag} className="px-3 py-1 bg-accent/10 text-accent rounded-lg text-[10px] font-bold uppercase tracking-wider">{tag}</span>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </motion.div>
@@ -509,17 +525,20 @@ const ProjectModal = ({ project, onClose }: { project: any, onClose: () => void 
 const Projects = ({ projects: liveProjects }: { projects: any[] }) => {
   const [activeCategories, setActiveCategories] = useState<string[]>(['All']);
   const [activeTech, setActiveTech] = useState<string[]>([]);
+  const [activeTags, setActiveTags] = useState<string[]>([]);
   const [selectedProject, setSelectedProject] = useState<any>(null);
   
   const projects = liveProjects.length > 0 ? liveProjects : STATIC_PROJECTS;
   
   const categories = ['All', ...Array.from(new Set(projects.map(p => (p as any).category)))];
   const allTech = Array.from(new Set(projects.flatMap(p => (p as any).tech))).sort();
+  const allTags = Array.from(new Set(projects.flatMap(p => (p as any).tags || []))).sort();
   
   const filteredProjects = projects.filter(p => {
     const categoryMatch = activeCategories.includes('All') || activeCategories.includes((p as any).category);
     const techMatch = activeTech.length === 0 || activeTech.some(t => (p as any).tech.includes(t));
-    return categoryMatch && techMatch;
+    const tagMatch = activeTags.length === 0 || activeTags.some(t => (p as any).tags?.includes(t));
+    return categoryMatch && techMatch && tagMatch;
   });
 
   const toggleCategory = (cat: string) => {
@@ -543,6 +562,12 @@ const Projects = ({ projects: liveProjects }: { projects: any[] }) => {
     );
   };
 
+  const toggleTags = (tag: string) => {
+    setActiveTags(prev => 
+      prev.includes(tag) ? prev.filter(t => t !== tag) : [...prev, tag]
+    );
+  };
+
   return (
     <section id="projects" className="py-32 bg-bg-light dark:bg-[#050505] text-center relative overflow-hidden">
       {/* Decorative background element */}
@@ -550,17 +575,19 @@ const Projects = ({ projects: liveProjects }: { projects: any[] }) => {
       
       <div className="max-w-7xl mx-auto px-6">
         <div className="flex flex-col items-center mb-10">
-          <span className="badge-orange mb-6">Archive</span>
+          <span className="text-[10px] items-center gap-2 bg-accent/10 text-accent px-4 py-1.5 rounded-full font-bold uppercase tracking-widest inline-flex mb-6">
+            Portfolio
+          </span>
           <motion.h2 
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             className="text-5xl md:text-6xl font-display font-bold text-gray-900 dark:text-white mb-6 tracking-tight"
           >
-            Digital <span className="text-accent italic font-serif">Artifacts</span>
+            Featured <span className="text-accent italic font-serif">Work</span>
           </motion.h2>
           <p className="max-w-2xl text-gray-500 dark:text-gray-400 text-lg">
-            A curated selection of experiments and precision-engineered solutions.
+            A selection of projects reflecting my journey in technical excellence.
           </p>
         </div>
         
@@ -585,6 +612,27 @@ const Projects = ({ projects: liveProjects }: { projects: any[] }) => {
             </div>
           </div>
           
+          {allTags.length > 0 && (
+            <div className="space-y-4">
+              <h4 className="text-[10px] uppercase tracking-[0.4em] text-gray-500 font-bold">Tags</h4>
+              <div className="flex flex-wrap justify-center gap-2">
+                {allTags.map(tag => (
+                  <button 
+                    key={tag}
+                    onClick={() => toggleTags(tag)}
+                    className={`px-4 py-1.5 rounded-xl text-[10px] font-bold uppercase tracking-wider transition-all border ${
+                      activeTags.includes(tag) 
+                      ? 'bg-accent/20 border-accent/40 text-accent' 
+                      : 'bg-transparent border-gray-100 dark:border-white/5 text-gray-400 hover:border-accent/20'
+                    }`}
+                  >
+                    {tag}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
           <div className="space-y-4">
             <h4 className="text-[10px] uppercase tracking-[0.4em] text-gray-500 font-bold">Technologies</h4>
             <div className="flex flex-wrap justify-center gap-2 max-w-4xl mx-auto">
@@ -602,12 +650,12 @@ const Projects = ({ projects: liveProjects }: { projects: any[] }) => {
                 </button>
               ))}
             </div>
-            {activeTech.length > 0 && (
+            {(activeTech.length > 0 || activeTags.length > 0) && (
                <button 
-                onClick={() => setActiveTech([])}
+                onClick={() => { setActiveTech([]); setActiveTags([]); }}
                 className="text-[9px] uppercase tracking-widest text-accent font-bold mt-4 hover:underline"
                >
-                 Clear all tech filters
+                 Clear all filters
                </button>
             )}
           </div>
@@ -1087,36 +1135,17 @@ export default function App() {
     document.documentElement.classList.toggle('dark', theme === 'dark');
     localStorage.setItem('theme', theme);
 
-    const fetchData = async (retries = 2) => {
-      try {
-        // Fetch independently to prevent one failure from blocking the other
-        const profilePromise = getProfile().catch(err => {
-          console.warn("Profile sync issue:", err);
-          return null;
-        });
-        const projectsPromise = getProjects().catch(err => {
-          console.warn("Projects sync issue:", err);
-          return [];
-        });
+    // Profile subscription
+    const unsubProfile = subscribeToProfile(setProfile);
+    // Projects subscription
+    const unsubProjects = subscribeToProjects(setProjects);
 
-        const [prof, projs] = await Promise.all([profilePromise, projectsPromise]);
-        
-        if (prof) setProfile(prof);
-        if (projs && projs.length > 0) setProjects(projs);
+    setLoading(false);
 
-        // If both failed and we have retries left
-        if (!prof && (!projs || projs.length === 0) && retries > 0) {
-          console.log(`🔄 Retrying data sync... (${retries} attempts left)`);
-          setTimeout(() => fetchData(retries - 1), 2000);
-          return;
-        }
-      } catch (err) {
-        console.error("Critical sync error:", err);
-      } finally {
-        setLoading(false);
-      }
+    return () => {
+      unsubProfile();
+      unsubProjects();
     };
-    fetchData();
   }, [theme]);
 
   const toggleTheme = () => setTheme(prev => (prev === 'light' ? 'dark' : 'light'));
