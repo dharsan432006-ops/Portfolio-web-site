@@ -106,7 +106,7 @@ const Hero = ({ profile }: { profile: any }) => {
   const displayProfile = {
     name: profile?.name || 'Sudharsan',
     role: profile?.role || 'Software Engineer',
-    photo: profile?.photo || 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?q=80&w=800&h=1100&auto=format&fit=crop',
+    photo: profile?.photo || 'https://github.com/dharsan432006-ops.png',
     summary: profile?.summary || 'Building exceptional AI-powered web experiences with high-performance scalable architectures.'
   };
 
@@ -1000,13 +1000,31 @@ export default function App() {
     document.documentElement.classList.toggle('dark', theme === 'dark');
     localStorage.setItem('theme', theme);
 
-    const fetchData = async () => {
+    const fetchData = async (retries = 2) => {
       try {
-        const [prof, projs] = await Promise.all([getProfile(), getProjects()]);
+        // Fetch independently to prevent one failure from blocking the other
+        const profilePromise = getProfile().catch(err => {
+          console.warn("Profile sync issue:", err);
+          return null;
+        });
+        const projectsPromise = getProjects().catch(err => {
+          console.warn("Projects sync issue:", err);
+          return [];
+        });
+
+        const [prof, projs] = await Promise.all([profilePromise, projectsPromise]);
+        
         if (prof) setProfile(prof);
         if (projs && projs.length > 0) setProjects(projs);
+
+        // If both failed and we have retries left
+        if (!prof && (!projs || projs.length === 0) && retries > 0) {
+          console.log(`🔄 Retrying data sync... (${retries} attempts left)`);
+          setTimeout(() => fetchData(retries - 1), 2000);
+          return;
+        }
       } catch (err) {
-        console.error("Failed to sync with live data:", err);
+        console.error("Critical sync error:", err);
       } finally {
         setLoading(false);
       }

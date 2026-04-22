@@ -4,9 +4,23 @@ import { getFirestore, doc, getDoc, setDoc, collection, getDocs, query, orderBy,
 import firebaseConfig from '../../firebase-applet-config.json';
 
 const app = initializeApp(firebaseConfig);
-export const db = getFirestore(app);
+export const db = getFirestore(app, (firebaseConfig as any).firestoreDatabaseId);
 export const auth = getAuth(app);
 export const googleProvider = new GoogleAuthProvider();
+
+// Connection Test as per instructions
+import { getDocFromServer } from 'firebase/firestore';
+async function testConnection() {
+  try {
+    await getDocFromServer(doc(db, 'test', 'connection'));
+    console.log("✅ Firestore Connection Established");
+  } catch (error) {
+    if (error instanceof Error && error.message.includes('offline')) {
+      console.warn("⚠️ Firestore is offline. This may be expected during initial load in some environments.");
+    }
+  }
+}
+testConnection();
 
 // Error Handling Helper
 export const handleFirestoreError = (error: any, operationType: string, path: string | null = null) => {
