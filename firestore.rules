@@ -61,14 +61,37 @@ service cloud.firestore {
     // --- Skills ---
     match /skills/{skillId} {
       allow read: if true;
-      allow write: if isOwner() && isValidId(skillId) && isValidSkill(incoming());
+      allow write: if isOwner();
     }
 
-    function isValidSkill(data) {
-      return data.keys().hasAll(['name', 'level', 'category'])
-        && data.name is string && data.name.size() <= 100
-        && data.level is number && data.level >= 0 && data.level <= 100
-        && data.category in ['languages', 'technologies', 'tools'];
+    // --- Experience ---
+    match /experience/{id} {
+      allow read: if true;
+      allow write: if isOwner();
+    }
+
+    // --- Education ---
+    match /education/{id} {
+      allow read: if true;
+      allow write: if isOwner();
+    }
+
+    // --- Achievements ---
+    match /achievements/{id} {
+      allow read: if true;
+      allow write: if isOwner();
+    }
+
+    // --- Testimonials ---
+    match /testimonials/{id} {
+      allow read: if true;
+      allow write: if isOwner();
+    }
+
+    // --- Goals ---
+    match /config/goals {
+      allow read: if true;
+      allow write: if isOwner();
     }
   }
 }

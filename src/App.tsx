@@ -26,7 +26,11 @@ import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import { Helmet, HelmetProvider } from 'react-helmet-async';
 import { PROJECTS as STATIC_PROJECTS, SKILLS, EXPERIENCE, EDUCATION, ACHIEVEMENTS, TESTIMONIALS } from './constants';
-import { subscribeToProfile, subscribeToProjects } from './lib/firebase.ts';
+import { 
+  subscribeToProjects, 
+  subscribeToCollection,
+  subscribeToConfig
+} from './lib/firebase.ts';
 
 const Skeleton = ({ className }: { className?: string }) => (
   <div className={`animate-pulse bg-gray-200 dark:bg-white/10 rounded-xl ${className}`} />
@@ -174,9 +178,11 @@ const Hero = ({ profile }: { profile: any }) => {
   );
 };
 
-const About = () => {
+const About = ({ skills }: { skills: any }) => {
   const [activeTab, setActiveTab] = useState<'languages' | 'technologies' | 'tools'>('languages');
   
+  const currentSkills = skills[activeTab] || [];
+
   return (
     <section id="about" className="py-32 bg-white dark:bg-[#050505] relative z-10 border-b border-gray-100 dark:border-white/5">
       <div className="max-w-6xl mx-auto px-6">
@@ -200,37 +206,37 @@ const About = () => {
           
           <div className="glass-card !bg-gray-50 dark:!bg-white/5 !border-gray-200 dark:!border-white/10 p-8 shadow-sm">
             <div className="space-y-6">
-              <div className="flex gap-4 border-b border-gray-200 dark:border-white/10 mb-6">
+              <div className="flex gap-4 border-b border-gray-200 dark:border-white/10 mb-6 font-mono">
                 {(['languages', 'technologies', 'tools'] as const).map(tab => (
                   <button 
                     key={tab}
                     onClick={() => setActiveTab(tab)}
-                    className={`pb-3 text-[11px] uppercase tracking-widest font-display font-bold transition-all ${activeTab === tab ? 'text-accent border-b-2 border-accent' : 'text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300'}`}
+                    className={`pb-3 text-[10px] uppercase tracking-widest font-bold transition-all ${activeTab === tab ? 'text-accent border-b-2 border-accent' : 'text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300'}`}
                   >
                     {tab}
                   </button>
                 ))}
               </div>
               <div className="grid gap-6">
-                {SKILLS[activeTab].map((skill, index) => (
+                {currentSkills.map((skill: any, index: number) => (
                   <div key={skill.name}>
-                    <div className="flex justify-between text-[12px] font-bold text-gray-700 dark:text-gray-300 mb-2 tracking-wide uppercase">
+                    <div className="flex justify-between text-[11px] font-bold text-gray-700 dark:text-gray-300 mb-2 tracking-wide uppercase">
                       <span>{skill.name}</span>
                       <span className="opacity-70">{skill.level}%</span>
                     </div>
-                    <div className="h-2 w-full bg-gray-200 dark:bg-white/5 rounded-full overflow-hidden relative">
+                    <div className="h-1.5 w-full bg-gray-200 dark:bg-white/5 rounded-full overflow-hidden relative">
                       <motion.div 
                         initial={{ width: 0 }}
                         whileInView={{ width: `${skill.level}%` }}
                         viewport={{ once: false, amount: 0.3 }}
                         transition={{ 
                           duration: 1.5, 
-                          ease: [0.34, 1.56, 0.64, 1], // Custom bouncy ease for premium feel
+                          ease: [0.34, 1.56, 0.64, 1],
                           delay: index * 0.1 
                         }}
                         className="h-full bg-accent relative"
                       >
-                        <motion.div 
+                         <motion.div 
                           animate={{ 
                             opacity: [0.2, 0.5, 0.2],
                             x: ['-100%', '100%']
@@ -749,31 +755,35 @@ const Projects = ({ projects: liveProjects }: { projects: any[] }) => {
   );
 };
 
-const Experience = () => {
+const Experience = ({ experience, education }: { experience: any[], education: any[] }) => {
   const [view, setView] = useState<'timeline' | 'list'>('timeline');
+  const combined = [...experience, ...education].sort((a, b) => (b.order || 0) - (a.order || 0));
 
   return (
-    <section id="experience" className="py-24 bg-white dark:bg-[#080808] text-center border-t border-gray-100 dark:border-white/5">
-      <div className="max-w-4xl mx-auto px-6">
+    <section id="experience" className="py-32 bg-white dark:bg-[#050505] text-center border-t border-gray-100 dark:border-white/5 relative overflow-hidden">
+      <div className="max-w-5xl mx-auto px-6">
         <motion.div 
           initial={{ opacity: 0, y: 10 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
-          className="flex flex-col items-center mb-16"
+          className="flex flex-col items-center mb-20"
         >
-          <span className="badge-orange mb-6 inline-block">Experience / Education</span>
-          <div className="flex bg-gray-100 rounded-full p-1 border border-gray-200">
+          <span className="text-[10px] items-center gap-2 bg-accent/10 text-accent px-4 py-1.5 rounded-full font-bold uppercase tracking-[0.3em] inline-flex mb-6">
+            Trajectory
+          </span>
+          <h2 className="text-4xl md:text-5xl font-display font-bold text-gray-900 dark:text-white mb-10">Experience & Education</h2>
+          <div className="flex bg-gray-100 dark:bg-white/5 rounded-2xl p-1.5 border border-gray-200 dark:border-white/10">
             <button 
               onClick={() => setView('timeline')}
-              className={`px-6 py-2 rounded-full text-[11px] font-bold uppercase transition-all ${view === 'timeline' ? 'bg-white text-gray-900 shadow-md' : 'text-gray-500 hover:text-gray-700'}`}
+              className={`px-8 py-2.5 rounded-xl text-[10px] font-bold uppercase tracking-widest transition-all ${view === 'timeline' ? 'bg-white dark:bg-white/10 text-gray-900 dark:text-white shadow-xl' : 'text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'}`}
             >
               Timeline
             </button>
             <button 
               onClick={() => setView('list')}
-              className={`px-6 py-2 rounded-full text-[11px] font-bold uppercase transition-all ${view === 'list' ? 'bg-white text-gray-900 shadow-md' : 'text-gray-500 hover:text-gray-700'}`}
+              className={`px-8 py-2.5 rounded-xl text-[10px] font-bold uppercase tracking-widest transition-all ${view === 'list' ? 'bg-white dark:bg-white/10 text-gray-900 dark:text-white shadow-xl' : 'text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'}`}
             >
-              List
+              Detailed List
             </button>
           </div>
         </motion.div>
@@ -786,49 +796,63 @@ const Experience = () => {
         >
           {view === 'timeline' ? (
             <div className="relative pt-12 min-h-[400px]">
-              <div className="timeline-line" />
+              <div className="timeline-line hidden md:block" />
               <div className="space-y-24">
-                {[...EXPERIENCE, ...EDUCATION].map((item, idx) => (
+                {combined.map((item, idx) => (
                   <motion.div 
                     key={idx}
                     initial={{ opacity: 0, y: 20 }}
                     whileInView={{ opacity: 1, y: 0 }}
                     viewport={{ once: true }}
-                    className="relative flex items-center justify-center"
+                    className={`relative flex items-center justify-center ${idx % 2 === 0 ? 'md:justify-start md:pl-20' : 'md:justify-end md:pr-20'}`}
                   >
-                    <div className="timeline-dot" />
-                    <div className={`mt-0 glass-card p-6 inline-block max-w-[280px] md:max-w-sm text-left ${idx % 2 === 0 ? 'md:mr-[30rem]' : 'md:ml-[30rem]'}`}>
-                      <div className="text-accent font-mono text-[10px] uppercase mb-1">
-                        {'role' in item ? 'Experience' : 'Education'}
+                    <div className="timeline-dot hidden md:block" />
+                    <div className="glass-card p-10 max-w-sm text-left hover:border-accent/30 transition-all border-white/10 group">
+                      <div className="text-accent font-mono text-[9px] uppercase font-bold tracking-[0.2em] mb-3 flex items-center justify-between">
+                        <span>{'role' in item ? 'Professional' : 'Academic'}</span>
+                        <span className="opacity-40">{item.period}</span>
                       </div>
-                      <h4 className="text-gray-900 font-bold text-sm">{'role' in item ? (item as any).role : (item as any).degree}</h4>
-                      <div className="text-gray-500 text-xs mt-1">{'company' in item ? (item as any).company : (item as any).school}</div>
-                      <div className="text-gray-400 text-[10px] mt-2 font-mono">{item.period}</div>
+                      <h4 className="text-gray-900 dark:text-white font-bold text-xl mb-1 group-hover:text-accent transition-colors">
+                        {'role' in item ? (item as any).role : (item as any).degree}
+                      </h4>
+                      <div className="text-gray-500 dark:text-gray-400 text-sm font-sans mb-4 italic">
+                        {'company' in item ? (item as any).company : (item as any).school}
+                      </div>
+                      {'description' in item && (
+                        <p className="text-xs text-gray-500 dark:text-gray-500 leading-relaxed font-sans line-clamp-3">
+                          {item.description}
+                        </p>
+                      )}
                     </div>
                   </motion.div>
                 ))}
               </div>
             </div>
           ) : (
-            <div className="space-y-4 text-left max-w-2xl mx-auto">
-              {[...EXPERIENCE, ...EDUCATION].map((item, idx) => (
+            <div className="space-y-6 text-left max-w-3xl mx-auto">
+              {combined.map((item, idx) => (
                 <motion.div 
                   key={idx}
                   initial={{ opacity: 0, x: -20 }}
-                  animate={{ opacity: 1, x: 0 }}
+                  whileInView={{ opacity: 1, x: 0 }}
                   transition={{ delay: idx * 0.1 }}
-                  className="glass-card p-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 hover:border-white/20 transition-colors"
+                  className="glass-card p-10 flex flex-col md:flex-row justify-between items-start md:items-center gap-8 hover:border-accent/40 bg-white/5 border-white/5 transition-all group"
                 >
-                  <div className="flex gap-4 items-start">
-                    <div className={`w-1 h-12 rounded-full ${'role' in item ? 'bg-accent' : 'bg-purple-500'} shrink-0 mt-1`} />
+                  <div className="flex gap-8 items-start">
+                    <div className={`w-1.5 h-16 rounded-full ${'role' in item ? 'bg-accent shadow-[0_0_20px_rgba(255,82,82,0.3)]' : 'bg-purple-500 shadow-[0_0_20px_rgba(168,85,247,0.3)]'} shrink-0 mt-1`} />
                     <div>
-                      <div className="flex items-center gap-2 mb-1">
-                        <h4 className="text-gray-900 font-bold text-base">{'role' in item ? (item as any).role : (item as any).degree}</h4>
+                      <div className="flex items-center gap-3 mb-2">
+                        <span className={`text-[8px] px-2 py-0.5 rounded font-bold uppercase tracking-widest ${'role' in item ? 'bg-accent/10 text-accent' : 'bg-purple-500/10 text-purple-500'}`}>
+                           {'role' in item ? 'EXP' : 'EDU'}
+                        </span>
+                        <h4 className="text-gray-900 dark:text-white font-bold text-xl leading-tight group-hover:text-accent transition-colors">
+                          {'role' in item ? (item as any).role : (item as any).degree}
+                        </h4>
                       </div>
-                      <div className="text-gray-500 text-sm">{'company' in item ? (item as any).company : (item as any).school}</div>
+                      <div className="text-gray-500 dark:text-gray-400 font-sans text-sm">{'company' in item ? (item as any).company : (item as any).school}</div>
                     </div>
                   </div>
-                  <div className="text-gray-500 font-mono text-xs md:text-right bg-white/5 py-1 px-3 rounded-full border border-white/5">
+                  <div className="text-gray-400 font-mono text-[10px] uppercase font-bold tracking-widest bg-white/5 py-2 px-5 rounded-xl border border-white/10 group-hover:bg-accent/10 group-hover:text-accent transition-all">
                     {item.period}
                   </div>
                 </motion.div>
@@ -841,32 +865,44 @@ const Experience = () => {
   );
 };
 
-const Achievements = () => {
+const Achievements = ({ achievements }: { achievements: any[] }) => {
+  const currentAchievements = achievements.length > 0 ? achievements.sort((a,b) => (b.order || 0) - (a.order || 0)) : ACHIEVEMENTS;
+
   return (
-    <section id="achievements" className="py-24 bg-bg-light dark:bg-[#050505] text-center">
+    <section id="achievements" className="py-32 bg-bg-light dark:bg-[#050505] text-center border-t border-gray-100 dark:border-white/5">
       <div className="max-w-6xl mx-auto px-6">
-        <span className="badge-orange mb-6 inline-block">Awards</span>
+        <span className="text-[10px] items-center gap-2 bg-accent/10 text-accent px-4 py-1.5 rounded-full font-bold uppercase tracking-[0.3em] inline-flex mb-6">
+          Awards
+        </span>
         <motion.h2 
           initial={{ opacity: 0, scale: 0.95 }}
           whileInView={{ opacity: 1, scale: 1 }}
           viewport={{ once: true }}
-          className="text-4xl md:text-5xl font-display font-bold text-gray-900 dark:text-white mb-16"
+          className="text-4xl md:text-6xl font-display font-bold text-gray-900 dark:text-white mb-20"
         >
-          Achievements
+          Key Accomplishments
         </motion.h2>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-          {ACHIEVEMENTS.slice(0, 3).map((ach, idx) => (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
+          {currentAchievements.map((ach, idx) => (
             <motion.div 
               key={idx}
-              initial={{ opacity: 0, y: 10 }}
+              initial={{ opacity: 0, y: 30 }}
               whileInView={{ opacity: 1, y: 0 }}
-              transition={{ delay: idx * 0.1 }}
+              transition={{ delay: idx * 0.1, duration: 0.6 }}
               viewport={{ once: true }}
-              className="glass-card !bg-white dark:!bg-white/5 !border-gray-100 dark:!border-white/10 p-12 flex flex-col items-center justify-center text-center shadow-sm hover:shadow-xl transition-all"
+              whileHover={{ y: -10 }}
+              className="glass-card !bg-white/5 !border-white/10 p-12 flex flex-col items-center justify-center text-center shadow-xl hover:border-accent/40 shadow shadow-accent/5"
             >
-              {idx === 0 ? <Award size={40} className="text-accent mb-6" /> : idx === 1 ? <Cpu size={40} className="text-accent mb-6" /> : <Award size={40} className="text-accent mb-6" />}
-              <h4 className="text-gray-900 dark:text-white font-bold text-lg mb-2">{ach.title}</h4>
-              <p className="text-[11px] text-gray-400 uppercase tracking-widest font-bold">{ach.issuer}</p>
+              <div className="w-20 h-20 bg-accent/10 rounded-[32px] flex items-center justify-center text-accent mb-8 shadow-inner">
+                {ach.category === 'Award' ? <Award size={36} /> : <Cpu size={36} />}
+              </div>
+              <h4 className="text-gray-900 dark:text-white font-bold text-2xl mb-3 tracking-tight">{ach.title}</h4>
+              <p className="text-[10px] text-gray-500 uppercase tracking-[0.3em] font-mono font-bold mb-6 italic">{ach.issuer} • {ach.date}</p>
+              {ach.description && (
+                <p className="text-sm text-gray-500 dark:text-gray-500 font-sans leading-relaxed">
+                  {ach.description}
+                </p>
+              )}
             </motion.div>
           ))}
         </div>
@@ -875,59 +911,108 @@ const Achievements = () => {
   );
 };
 
-const Testimonials = () => {
+const Testimonials = ({ testimonials }: { testimonials: any[] }) => {
   const [index, setIndex] = useState(0);
+  const currentTestimonials = testimonials.length > 0 ? testimonials : TESTIMONIALS;
 
-  const next = () => setIndex((index + 1) % TESTIMONIALS.length);
-  const prev = () => setIndex((index - 1 + TESTIMONIALS.length) % TESTIMONIALS.length);
+  const next = () => setIndex((index + 1) % currentTestimonials.length);
+  const prev = () => setIndex((index - 1 + currentTestimonials.length) % currentTestimonials.length);
 
   return (
-    <section id="testimonials" className="py-24 bg-white dark:bg-[#050505] text-center overflow-hidden">
-      <div className="max-w-4xl mx-auto px-6 relative">
-        <span className="badge-orange mb-6 inline-block">Testimonials</span>
+    <section id="testimonials" className="py-32 bg-white dark:bg-[#050505] text-center overflow-hidden border-t border-gray-100 dark:border-white/5">
+      <div className="max-w-5xl mx-auto px-6 relative">
+        <span className="text-[10px] items-center gap-2 bg-accent/10 text-accent px-4 py-1.5 rounded-full font-bold uppercase tracking-[0.3em] inline-flex mb-6">
+          Vouch
+        </span>
         <motion.h2 
           initial={{ opacity: 0, y: 10 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
-          className="text-4xl md:text-5xl font-display font-bold text-gray-900 dark:text-white mb-16"
+          className="text-4xl md:text-6xl font-display font-bold text-gray-900 dark:text-white mb-20"
         >
           Kind Words
         </motion.h2>
 
-        <div className="relative group">
+        <div className="relative group max-w-4xl mx-auto">
           <AnimatePresence mode="wait">
             <motion.div
               key={index}
-              initial={{ opacity: 0, x: 50 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -50 }}
-              className="glass-card !bg-gray-50 dark:!bg-white/5 !border-gray-200 dark:!border-white/10 p-8 md:p-16 relative"
+              initial={{ opacity: 0, x: 100, scale: 0.9 }}
+              animate={{ opacity: 1, x: 0, scale: 1 }}
+              exit={{ opacity: 0, x: -100, scale: 0.9 }}
+              transition={{ type: 'spring', damping: 20, stiffness: 100 }}
+              className="glass-card !bg-gray-50 dark:!bg-white/5 !border-white/10 p-12 md:p-24 relative shadow-2xl"
             >
-              <div className="text-accent mb-8 opacity-20 flex justify-center">
-                <Mail size={60} strokeWidth={1} />
+              <div className="text-accent mb-12 opacity-10 flex justify-center">
+                <Layers size={100} strokeWidth={1} />
               </div>
-              <p className="text-lg md:text-xl text-gray-700 dark:text-gray-300 font-sans italic leading-relaxed mb-10">
-                "{TESTIMONIALS[index].quote}"
+              <p className="text-xl md:text-2xl text-gray-700 dark:text-gray-200 font-sans italic leading-relaxed mb-16 relative z-10">
+                "{currentTestimonials[index].quote}"
               </p>
-              <div className="flex items-center justify-center gap-4">
-                <img 
-                  src={TESTIMONIALS[index].image} 
-                  alt={TESTIMONIALS[index].name} 
-                  className="w-12 h-12 rounded-full border-2 border-accent/20"
-                />
-                <div className="text-left">
-                  <h4 className="font-bold text-sm text-gray-900 dark:text-white">{TESTIMONIALS[index].name}</h4>
-                  <p className="text-[10px] text-gray-500 uppercase tracking-widest">{TESTIMONIALS[index].role}</p>
+              <div className="flex flex-col items-center justify-center gap-6">
+                <div className="relative">
+                    <div className="absolute inset-0 bg-accent blur-xl opacity-20" />
+                    <img 
+                      src={currentTestimonials[index].image} 
+                      alt={currentTestimonials[index].name} 
+                      className="w-20 h-20 rounded-full border-2 border-accent/40 relative z-10 object-cover shadow-2xl"
+                      referrerPolicy="no-referrer"
+                    />
+                </div>
+                <div className="text-center">
+                  <h4 className="font-bold text-lg text-gray-900 dark:text-white mb-1">{currentTestimonials[index].name}</h4>
+                  <p className="text-[10px] text-gray-500 dark:text-gray-400 uppercase font-mono tracking-[0.4em] font-bold">{currentTestimonials[index].role}</p>
                 </div>
               </div>
             </motion.div>
           </AnimatePresence>
 
-          <div className="absolute top-1/2 -left-4 md:-left-12 -translate-y-1/2 z-10">
-            <button onClick={prev} className="p-3 rounded-full bg-white dark:bg-black border border-gray-100 dark:border-white/10 shadow-lg hover:text-accent transition-all"><ChevronLeft size={18} /></button>
+          <div className="absolute top-1/2 -left-4 md:-left-20 -translate-y-1/2 z-10 flex flex-col gap-4">
+            <button onClick={prev} className="p-5 rounded-full bg-white dark:bg-black border border-white/10 shadow-2xl hover:text-accent hover:scale-110 active:scale-95 transition-all text-gray-400"><ChevronLeft size={24} /></button>
           </div>
-          <div className="absolute top-1/2 -right-4 md:-right-12 -translate-y-1/2 z-10">
-            <button onClick={next} className="p-3 rounded-full bg-white dark:bg-black border border-gray-100 dark:border-white/10 shadow-lg hover:text-accent transition-all"><ChevronRight size={18} /></button>
+          <div className="absolute top-1/2 -right-4 md:-right-20 -translate-y-1/2 z-10 flex flex-col gap-4">
+            <button onClick={next} className="p-5 rounded-full bg-white dark:bg-black border border-white/10 shadow-2xl hover:text-accent hover:scale-110 active:scale-95 transition-all text-gray-400"><ChevronRight size={24} /></button>
+          </div>
+          
+          <div className="flex justify-center gap-3 mt-12">
+            {currentTestimonials.map((_, i) => (
+                <button 
+                  key={i} 
+                  onClick={() => setIndex(i)}
+                  className={`h-1 rounded-full transition-all duration-500 ${i === index ? 'w-12 bg-accent' : 'w-4 bg-white/10 hover:bg-white/20'}`}
+                />
+            ))}
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+};
+
+const Goals = ({ goals }: { goals: any }) => {
+  return (
+    <section id="goals" className="py-32 bg-bg-light dark:bg-[#050505] relative overflow-hidden border-t border-gray-100 dark:border-white/5">
+      <div className="absolute bottom-0 right-0 w-[600px] h-[600px] bg-accent/5 rounded-full blur-[120px] -z-10" />
+      <div className="max-w-6xl mx-auto px-6">
+        <div className="flex flex-col md:flex-row items-center gap-20">
+          <div className="flex-1 text-left">
+            <span className="text-[10px] items-center gap-2 bg-accent/10 text-accent px-4 py-1.5 rounded-full font-bold uppercase tracking-[0.3em] inline-flex mb-6">
+              Vision
+            </span>
+            <h2 className="text-4xl md:text-6xl font-display font-bold text-gray-900 dark:text-white mb-10 leading-tight">
+              Projecting <span className="text-accent italic font-serif">Future</span> <br />
+              Milestones
+            </h2>
+            <div className="prose prose-invert dark:prose-p:text-gray-400 prose-p:text-gray-600 prose-p:text-lg italic font-serif">
+              "{goals.current || 'Evolving through continuous technical transformation.'}"
+            </div>
+          </div>
+          <div className="w-full md:w-80 h-80 bg-accent/5 rounded-[60px] border border-accent/10 flex items-center justify-center shadow-2xl relative group">
+            <div className="absolute inset-10 border-2 border-dashed border-accent/20 rounded-[40px] animate-pulse" />
+            <div className="relative z-10 text-center">
+                <Cpu size={80} className="text-accent opacity-20 mb-4 group-hover:scale-110 transition-transform duration-700" />
+                <div className="text-[10px] font-mono font-bold text-accent uppercase tracking-widest">Active Evolution</div>
+            </div>
           </div>
         </div>
       </div>
@@ -1129,22 +1214,39 @@ export default function App() {
   });
   const [profile, setProfile] = useState<any>(null);
   const [projects, setProjects] = useState<any[]>([]);
+  const [skills, setSkills] = useState<any>(SKILLS);
+  const [experience, setExperience] = useState<any[]>(EXPERIENCE);
+  const [education, setEducation] = useState<any[]>(EDUCATION);
+  const [achievements, setAchievements] = useState<any[]>(ACHIEVEMENTS);
+  const [testimonials, setTestimonials] = useState<any[]>(TESTIMONIALS);
+  const [goals, setGoals] = useState<any>({ current: 'Building future-ready AI solutions.' });
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     document.documentElement.classList.toggle('dark', theme === 'dark');
     localStorage.setItem('theme', theme);
 
-    // Profile subscription
-    const unsubProfile = subscribeToProfile(setProfile);
-    // Projects subscription
-    const unsubProjects = subscribeToProjects(setProjects);
+    const unsubs = [
+      subscribeToConfig('profile', setProfile),
+      subscribeToCollection('projects', setProjects),
+      subscribeToCollection('skills', (data) => {
+        if (data.length > 0) {
+          const categorized: any = { languages: [], technologies: [], tools: [] };
+          data.forEach(s => categorized[s.category]?.push(s));
+          setSkills(categorized);
+        }
+      }),
+      subscribeToCollection('experience', setExperience),
+      subscribeToCollection('education', setEducation),
+      subscribeToCollection('achievements', setAchievements),
+      subscribeToCollection('testimonials', setTestimonials),
+      subscribeToConfig('goals', setGoals)
+    ];
 
     setLoading(false);
 
     return () => {
-      unsubProfile();
-      unsubProjects();
+      unsubs.forEach(unsub => unsub());
     };
   }, [theme]);
 
@@ -1178,11 +1280,12 @@ export default function App() {
             <Hero profile={profile} />
           </header>
           
-          <About />
+          <About skills={skills} />
           <Projects projects={projects} />
-          <Experience />
-          <Achievements />
-          <Testimonials />
+          <Experience experience={experience} education={education} />
+          <Achievements achievements={achievements} />
+          <Goals goals={goals} />
+          <Testimonials testimonials={testimonials} />
           <Contact />
         </main>
         

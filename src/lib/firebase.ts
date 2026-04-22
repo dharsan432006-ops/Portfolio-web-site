@@ -66,47 +66,68 @@ export const uploadImage = async (file: File, folder: string = 'projects') => {
 export const login = () => signInWithPopup(auth, googleProvider);
 export const logout = () => signOut(auth);
 
-// Profile Service
-export const subscribeToProfile = (callback: (data: any) => void) => {
-  const docRef = doc(db, 'config', 'profile');
+// Utility for generic collection subscriptions
+export const subscribeToCollection = (collectionName: string, callback: (data: any[]) => void, orderField: string = 'order') => {
+  const q = query(collection(db, collectionName), orderBy(orderField, 'asc'));
+  return onSnapshot(q, (snapshot) => {
+    const items = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    callback(items);
+  }, (error) => {
+    console.error(`Subscription Error (${collectionName}):`, error);
+  });
+};
+
+export const updateDocGeneric = async (collectionName: string, id: string, data: any) => {
+  try {
+    const docRef = doc(db, collectionName, id);
+    await setDoc(docRef, data, { merge: true });
+  } catch (error) {
+    handleFirestoreError(error, 'update', `${collectionName}/${id}`);
+  }
+};
+
+export const createDocGeneric = async (collectionName: string, data: any) => {
+  try {
+    const docRef = doc(db, collectionName, data.id || doc(collection(db, collectionName)).id);
+    await setDoc(docRef, data);
+  } catch (error) {
+    handleFirestoreError(error, 'create', `${collectionName}`);
+  }
+};
+
+export const deleteDocGeneric = async (collectionName: string, id: string) => {
+  try {
+    const docRef = doc(db, collectionName, id);
+    await deleteDoc(docRef);
+  } catch (error) {
+    handleFirestoreError(error, 'delete', `${collectionName}/${id}`);
+  }
+};
+
+// Config subscription (single doc)
+export const subscribeToConfig = (docId: string, callback: (data: any) => void) => {
+  const docRef = doc(db, 'config', docId);
   return onSnapshot(docRef, (doc) => {
     if (doc.exists()) {
       callback(doc.data());
     }
   }, (error) => {
-    console.error("Profile Subscription Error:", error);
+    console.error(`Config Subscription Error (${docId}):`, error);
   });
 };
 
-export const getProfile = async () => {
+export const updateConfig = async (docId: string, data: any) => {
   try {
-    const docRef = doc(db, 'config', 'profile');
-    const docSnap = await getDoc(docRef);
-    return docSnap.exists() ? docSnap.data() : null;
-  } catch (error) {
-    handleFirestoreError(error, 'get', 'config/profile');
-  }
-};
-
-export const updateProfile = async (data: any) => {
-  try {
-    const docRef = doc(db, 'config', 'profile');
+    const docRef = doc(db, 'config', docId);
     await setDoc(docRef, data, { merge: true });
   } catch (error) {
-    handleFirestoreError(error, 'update', 'config/profile');
+    handleFirestoreError(error, 'update', `config/${docId}`);
   }
 };
 
-// Projects Service
-export const subscribeToProjects = (callback: (data: any[]) => void) => {
-  const q = query(collection(db, 'projects'), orderBy('order', 'asc'));
-  return onSnapshot(q, (snapshot) => {
-    const projs = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-    callback(projs);
-  }, (error) => {
-    console.error("Projects Subscription Error:", error);
-  });
-};
+// Projects Service (kept for backwards compatibility or specific needs)
+export const subscribeToProjects = (callback: (data: any[]) => void) => subscribeToCollection('projects', callback);
+// ... existing specific ones if needed, but we'll use generic from now on
 
 export const getProjects = async () => {
   try {
