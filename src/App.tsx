@@ -16,12 +16,32 @@ import {
   Send,
   Menu,
   X,
+  Play,
+  Pause,
   ChevronUp,
   Twitter,
   PenTool,
   ChevronLeft,
-  Maximize2
+  Maximize2,
+  PieChart as PieChartIcon,
+  BarChart as BarChartIcon,
+  Zap
 } from 'lucide-react';
+import { 
+  BarChart, 
+  Bar, 
+  XAxis, 
+  YAxis, 
+  CartesianGrid, 
+  Tooltip as RechartsTooltip, 
+  ResponsiveContainer, 
+  Cell, 
+  Radar, 
+  RadarChart, 
+  PolarGrid, 
+  PolarAngleAxis, 
+  PolarRadiusAxis 
+} from 'recharts';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import { Helmet, HelmetProvider } from 'react-helmet-async';
@@ -31,10 +51,6 @@ import {
   subscribeToCollection,
   subscribeToConfig
 } from './lib/firebase.ts';
-
-const Skeleton = ({ className }: { className?: string }) => (
-  <div className={`animate-pulse bg-gray-200 dark:bg-white/10 rounded-xl ${className}`} />
-);
 
 const ScrollProgress = () => {
   const [width, setWidth] = useState(0);
@@ -61,194 +77,218 @@ const ScrollProgress = () => {
   );
 };
 
-const Navbar = ({ theme, toggleTheme }: { theme: 'light' | 'dark', toggleTheme: () => void }) => {
+const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
   
   return (
-    <nav className="fixed top-6 left-1/2 -translate-x-1/2 z-50 w-[95%] max-w-4xl px-4 py-2 rounded-full bg-white/80 dark:bg-black/60 backdrop-blur-xl border border-gray-100 dark:border-white/10 shadow-lg flex items-center justify-between">
-      <div className="flex items-center gap-6 ml-4">
-        {['Home', 'About', 'Projects', 'Contact'].map(item => (
+    <nav className="fixed top-0 left-0 w-full z-100 px-8 py-8 flex items-center justify-between pointer-events-none">
+      <div className="flex items-center pointer-events-auto">
+        <a href="#" className="font-display font-black text-2xl text-white tracking-tighter">Sudharsan S.</a>
+      </div>
+
+      <div className="hidden md:flex items-center gap-10 pointer-events-auto">
+        {['Home', 'About', 'Projects'].map(item => (
           <a 
             key={item}
             href={`#${item.toLowerCase()}`} 
-            className="hidden md:block text-[13px] font-bold text-gray-800 dark:text-gray-200 hover:text-accent transition-colors"
+            className="nav-link"
           >
             {item}
           </a>
         ))}
-        <button className="md:hidden text-gray-800 dark:text-gray-200" onClick={() => setIsOpen(!isOpen)}>
-          {isOpen ? <X size={20} /> : <Menu size={20} />}
-        </button>
+        <a href="#contact" className="btn-primary">
+          Get in touch
+          <div className="w-8 h-8 bg-black/5 rounded-full flex items-center justify-center">
+            <ChevronRight size={14} className="text-black" />
+          </div>
+        </a>
       </div>
 
-      <div className="flex items-center gap-4">
-        <button 
-          onClick={toggleTheme}
-          className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-white/10 text-gray-800 dark:text-gray-200 transition-colors"
-          aria-label="Toggle theme"
-        >
-          {theme === 'light' ? <PenTool size={18} /> : <Cpu size={18} />}
-        </button>
-        <button 
-          onClick={() => window.open('/resume.pdf', '_blank')}
-          className="btn-primary !px-5 !py-2.5 !text-[11px] !gap-2"
-        >
-          Resume <ExternalLink size={14} />
-        </button>
-      </div>
+      <button 
+        className="md:hidden text-white pointer-events-auto" 
+        onClick={() => setIsOpen(!isOpen)}
+      >
+        <Menu size={24} />
+      </button>
+
+      <AnimatePresence>
+        {isOpen && (
+          <motion.div 
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            className="fixed inset-0 bg-surface/95 backdrop-blur-2xl z-[60] flex flex-col items-center justify-center gap-8 pointer-events-auto"
+          >
+            <button onClick={() => setIsOpen(false)} className="absolute top-8 right-8 text-white"><X size={32} /></button>
+            {['Home', 'About', 'Projects', 'Contact'].map(item => (
+              <a 
+                key={item}
+                onClick={() => setIsOpen(false)}
+                href={`#${item.toLowerCase()}`} 
+                className="text-4xl font-display font-bold text-white hover:text-accent transition-colors"
+              >
+                {item}
+              </a>
+            ))}
+          </motion.div>
+        )}
+      </AnimatePresence>
     </nav>
   );
 };
 
 const Hero = ({ profile }: { profile: any }) => {
-  const [stats, setStats] = useState({ repos: '12', followers: '45', stars: '180' });
-
-  const displayProfile = {
-    name: profile?.name || 'Sudharsan',
-    role: profile?.role || 'Software Engineer',
-    photo: profile?.photo || 'https://github.com/dharsan432006-ops.png',
-    summary: profile?.summary || 'Building high-performance applications with precision and modern technology stack.'
-  };
-
   return (
-    <div className="relative min-h-screen flex flex-col items-center justify-center pt-24 pb-12 overflow-hidden bg-bg-light dark:bg-[#050505]">
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-accent/5 rounded-full blur-[100px] -z-10" />
-      
-      <div className="max-w-7xl mx-auto px-6 grid md:grid-cols-2 items-center gap-12 text-left">
-        <motion.div
-          initial={{ opacity: 0, x: -30 }}
-          animate={{ opacity: 1, x: 0 }}
-          className="relative"
-        >
-          <div className="text-[10px] uppercase tracking-[0.3em] font-bold text-accent mb-4">
-            Available for hire
+    <div className="relative min-h-screen pt-32 flex flex-col items-center overflow-hidden">
+      <div className="max-w-7xl mx-auto px-8 w-full relative z-10">
+        <div className="glass-card relative overflow-hidden aspect-[16/8] md:aspect-[16/7] w-full flex items-center p-12 md:p-24 rounded-[80px]">
+          {/* Main Background Image */}
+          <div className="absolute inset-0">
+             <img 
+               src="https://images.unsplash.com/photo-1614850523296-d8c1af93d400?auto=format&fit=crop&q=80&w=2000" 
+               className="w-full h-full object-cover brightness-[0.35] contrast-125 scale-105"
+               alt="Background"
+               referrerPolicy="no-referrer"
+               onError={(e) => {
+                 const target = e.target as HTMLImageElement;
+                 if (!target.src.includes('placeholder')) {
+                    target.src = 'https://images.unsplash.com/photo-1550684848-fac1c5b4e853?q=80&w=2000'; // Dark red secondary fallback
+                 }
+               }}
+             />
+             <div className="absolute inset-0 bg-linear-to-tr from-accent/40 via-black/40 to-transparent" />
+             <div className="absolute inset-0 bg-black/20 backdrop-blur-[1px]" />
           </div>
-          <h1 className="text-6xl md:text-8xl font-display font-bold text-gray-900 dark:text-white leading-[1.1] mb-6">
-            I'm <span className="text-accent">{displayProfile.name.split(' ')[0]}</span>, <br />
-            {displayProfile.role}
-          </h1>
-          <p className="max-w-md text-lg text-gray-500 dark:text-gray-400 mb-10 leading-relaxed font-sans">
-            {displayProfile.summary}
-          </p>
-          <div className="flex gap-4">
-            <a href="#projects" className="btn-primary">
-              View Work <ChevronRight size={18} />
-            </a>
-            <a href="#contact" className="btn-secondary">
-              Contact Me
-            </a>
+
+          <div className="relative z-10 flex flex-col md:flex-row items-center justify-between w-full gap-12">
+            <div className="max-w-xl">
+              <span className="text-white text-lg md:text-xl font-medium mb-4 block">Hey, I'm a</span>
+              <h1 className="text-6xl md:text-8xl font-display font-bold text-white leading-[0.9] tracking-tighter">
+                Computer <br />
+                <span className="text-accent underline decoration-accent/30 underline-offset-8">Scientist</span>
+              </h1>
+            </div>
+
+            <div className="max-w-xs md:text-left text-center">
+              <h3 className="text-2xl font-bold text-white mb-4 leading-snug">
+                Building the future with code and AI.
+              </h3>
+              <p className="text-gray-400 text-sm leading-relaxed">
+                B.Tech Student specialized in Python, React, and Intelligent Systems.
+              </p>
+            </div>
           </div>
-          
-          <div className="mt-12 flex items-center gap-10">
+
+          {/* Bullet points row at the bottom of the hero card */}
+          <div className="absolute bottom-12 left-12 right-12 hidden md:grid grid-cols-4 gap-8">
             {[
-              { label: 'Public Repos', value: stats.repos },
-              { label: 'Followers', value: stats.followers },
-              { label: 'Github Stars', value: stats.stars }
-            ].map(stat => (
-              <div key={stat.label}>
-                <div className="text-2xl font-bold text-gray-900 dark:text-white">{stat.value}+</div>
-                <div className="text-[10px] uppercase tracking-widest font-bold text-gray-500">{stat.label}</div>
+              { id: '01', label: 'Full-Stack Development' },
+              { id: '02', label: 'AI & Neural Platforms' },
+              { id: '03', label: 'Cloud Architecture' },
+              { id: '04', label: 'UI/UX Engineering' }
+            ].map((item) => (
+              <div key={item.id} className="space-y-1">
+                <span className="text-accent text-xs font-black">#{item.id}</span>
+                <p className="text-white/80 text-[10px] font-bold uppercase tracking-widest">{item.label}</p>
               </div>
             ))}
           </div>
-        </motion.div>
-
-        <motion.div
-          initial={{ opacity: 0, scale: 0.8 }}
-          animate={{ opacity: 1, scale: 1 }}
-          className="relative flex justify-center"
-        >
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[400px] h-[400px] md:w-[500px] md:h-[500px] bg-accent/20 rounded-full -z-10" />
-          <div className="relative w-[300px] h-[400px] md:w-[400px] md:h-[550px] rounded-[100px] border-[12px] border-white dark:border-white/10 shadow-2xl overflow-hidden bg-gray-100 dark:bg-white/5">
-            <img 
-              src={displayProfile.photo} 
-              alt={displayProfile.name} 
-              className="w-full h-full object-cover"
-              loading="lazy"
-            />
-          </div>
-          
-          <div className="absolute bottom-10 right-0 md:-right-10 p-6 glass-card !bg-white/40 dark:!bg-white/5 !border-white/50 backdrop-blur-xl shadow-xl">
-            <div className="text-3xl font-bold text-gray-900 dark:text-white">3+</div>
-            <div className="text-xs uppercase tracking-widest font-bold text-gray-500">Years Experience</div>
-          </div>
-        </motion.div>
+        </div>
       </div>
     </div>
   );
 };
 
-const About = ({ skills }: { skills: any }) => {
-  const [activeTab, setActiveTab] = useState<'languages' | 'technologies' | 'tools'>('languages');
-  
-  const currentSkills = skills[activeTab] || [];
+const Brands = () => {
+  return (
+    <section className="py-20 bg-surface">
+      <div className="max-w-7xl mx-auto px-8">
+        <div className="flex flex-wrap items-center justify-between gap-12 opacity-50 grayscale hover:grayscale-0 transition-all duration-700">
+          <span className="text-gray-400 font-bold text-[10px] uppercase tracking-[0.2em] w-full md:w-auto mb-4 md:mb-0">Associated with Excellence</span>
+          {[
+            { name: 'SRM Institute', icon: BookOpen },
+            { name: 'Microsoft', icon: Cpu },
+            { name: 'IBM', icon: Layers },
+            { name: 'AWS', icon: Zap }
+          ].map((brand) => (
+            <div key={brand.name} className="flex items-center gap-3">
+              <div className="w-8 h-8 rounded-full border border-white/20 flex items-center justify-center">
+                <brand.icon size={14} className="text-white" />
+              </div>
+              <span className="text-white font-bold text-sm tracking-tight">{brand.name}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+};
+
+const About = ({ profile }: { profile: any }) => {
+  if (!profile) return null;
 
   return (
-    <section id="about" className="py-32 bg-white dark:bg-[#050505] relative z-10 border-b border-gray-100 dark:border-white/5">
-      <div className="max-w-6xl mx-auto px-6">
-        <div className="grid md:grid-cols-2 gap-16 items-center">
-          <div>
-            <span className="text-[10px] items-center gap-2 bg-accent/10 text-accent px-4 py-1.5 rounded-full font-bold uppercase tracking-widest inline-flex mb-6">
-              Expertise
-            </span>
-            <h2 className="text-4xl md:text-5xl font-display font-bold text-gray-900 dark:text-white mb-8 leading-tight">
-              Crafting solutions <br />
-              with modern technology.
-            </h2>
-            <p className="text-gray-500 dark:text-gray-400 font-sans leading-relaxed text-lg mb-8">
-              Computer Science student at SRM Institute, passionate about algorithms, 
-              software engineering, and creating intuitive user experiences.
-            </p>
-            <div className="flex gap-4">
-              <a href="#contact" className="btn-primary">Get in Touch</a>
+    <section id="about" className="py-40 bg-black">
+      <div className="max-w-7xl mx-auto px-8">
+        <div className="grid lg:grid-cols-2 gap-24 items-center">
+          <div className="relative">
+            <div className="relative aspect-square rounded-[60px] overflow-hidden border border-white/10 group">
+              <img 
+                src={profile.photo || "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=1000"} 
+                className="w-full h-full object-cover grayscale hover:grayscale-0 transition-all duration-700 scale-105 group-hover:scale-110" 
+                alt="About me"
+                referrerPolicy="no-referrer"
+              />
+              <div className="absolute inset-0 bg-linear-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+            </div>
+            
+            {/* Artistic Accents */}
+            <div className="absolute -bottom-10 -right-10 w-40 h-40 bg-accent/20 rounded-full blur-3xl -z-10 animate-pulse" />
+            <div className="absolute -top-10 -left-10 w-40 h-40 bg-accent/10 rounded-full blur-3xl -z-10 animate-pulse delay-1000" />
+            
+            <div className="absolute top-10 right-10 flex flex-col gap-3">
+               <div className="w-12 h-1 bg-accent/40 rounded-full" />
+               <div className="w-8 h-1 bg-accent/30 rounded-full" />
+               <div className="w-5 h-1 bg-accent/20 rounded-full" />
             </div>
           </div>
-          
-          <div className="glass-card !bg-gray-50 dark:!bg-white/5 !border-gray-200 dark:!border-white/10 p-8 shadow-sm">
-            <div className="space-y-6">
-              <div className="flex gap-4 border-b border-gray-200 dark:border-white/10 mb-6 font-mono">
-                {(['languages', 'technologies', 'tools'] as const).map(tab => (
-                  <button 
-                    key={tab}
-                    onClick={() => setActiveTab(tab)}
-                    className={`pb-3 text-[10px] uppercase tracking-widest font-bold transition-all ${activeTab === tab ? 'text-accent border-b-2 border-accent' : 'text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300'}`}
-                  >
-                    {tab}
-                  </button>
-                ))}
+
+          <div className="space-y-12">
+            <div>
+              <span className="section-subtitle">Core Identity</span>
+              <h2 className="section-title">Who is <br /><span className="text-accent underline decoration-accent/20 underline-offset-8">Sudharsan?</span></h2>
+            </div>
+            
+            <div className="space-y-8">
+              <p className="text-2xl text-white font-serif italic border-l-4 border-accent pl-8 py-4 bg-white/[0.02] rounded-r-2xl">
+                "{profile.summary || 'A computer scientist dedicated to pushing the boundaries of what is possible with code.'}"
+              </p>
+              
+              <div className="grid grid-cols-2 gap-8 pt-8">
+                 <div className="space-y-2">
+                    <p className="text-[10px] font-black text-accent uppercase tracking-widest">Current Focus</p>
+                    <p className="text-white font-medium">{profile.role || 'Neural Intelligence & Distributed Systems'}</p>
+                 </div>
+                 <div className="space-y-2">
+                    <p className="text-[10px] font-black text-accent uppercase tracking-widest">Philosophy</p>
+                    <p className="text-white font-medium">Clean Code, Complex Architecture, Purposeful Impact</p>
+                 </div>
               </div>
-              <div className="grid gap-6">
-                {currentSkills.map((skill: any, index: number) => (
-                  <div key={skill.name}>
-                    <div className="flex justify-between text-[11px] font-bold text-gray-700 dark:text-gray-300 mb-2 tracking-wide uppercase">
-                      <span>{skill.name}</span>
-                      <span className="opacity-70">{skill.level}%</span>
-                    </div>
-                    <div className="h-1.5 w-full bg-gray-200 dark:bg-white/5 rounded-full overflow-hidden relative">
-                      <motion.div 
-                        initial={{ width: 0 }}
-                        whileInView={{ width: `${skill.level}%` }}
-                        viewport={{ once: false, amount: 0.3 }}
-                        transition={{ 
-                          duration: 1.5, 
-                          ease: [0.34, 1.56, 0.64, 1],
-                          delay: index * 0.1 
-                        }}
-                        className="h-full bg-accent relative"
-                      >
-                         <motion.div 
-                          animate={{ 
-                            opacity: [0.2, 0.5, 0.2],
-                            x: ['-100%', '100%']
-                          }}
-                          transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
-                          className="absolute inset-0 bg-linear-to-r from-transparent via-white/30 to-transparent"
-                        />
-                      </motion.div>
-                    </div>
-                  </div>
-                ))}
-              </div>
+            </div>
+
+            <div className="flex gap-12 pt-8 border-t border-white/5">
+               <div>
+                  <h4 className="text-accent text-3xl font-display font-bold">5+</h4>
+                  <p className="text-[9px] text-gray-500 uppercase tracking-widest mt-1">Scale Projects</p>
+               </div>
+               <div>
+                  <h4 className="text-white text-3xl font-display font-bold">100%</h4>
+                  <p className="text-[9px] text-gray-500 uppercase tracking-widest mt-1">Deployment Rate</p>
+               </div>
+               <div>
+                  <h4 className="text-white text-3xl font-display font-bold">AI</h4>
+                  <p className="text-[9px] text-gray-500 uppercase tracking-widest mt-1">First Approach</p>
+               </div>
             </div>
           </div>
         </div>
@@ -358,6 +398,174 @@ const ImageCarousel = ({ images, title, onImageClick }: { images: string[], titl
   );
 };
 
+const getVideoEmbedUrl = (url: string) => {
+  if (!url) return null;
+  
+  // YouTube
+  const ytMatch = url.match(/(?:https?:\/\/)?(?:www\.)?(?:youtube\.com\/watch\?v=|youtu\.be\/)([a-zA-Z0-9_-]{11})/);
+  if (ytMatch) return `https://www.youtube.com/embed/${ytMatch[1]}`;
+  
+  // Vimeo
+  const vimeoMatch = url.match(/(?:https?:\/\/)?(?:www\.)?vimeo\.com\/(\d+)/);
+  if (vimeoMatch) return `https://player.vimeo.com/video/${vimeoMatch[1]}`;
+  
+  return null;
+};
+
+const formatTime = (seconds: number) => {
+  const mins = Math.floor(seconds / 60);
+  const secs = Math.floor(seconds % 60);
+  return `${mins}:${secs.toString().padStart(2, '0')}`;
+};
+
+const VideoPlayer = ({ url }: { url: string }) => {
+  const videoRef = React.useRef<HTMLVideoElement>(null);
+  const [progress, setProgress] = useState(0);
+  const [duration, setDuration] = useState(0);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [showControls, setShowControls] = useState(false);
+
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video) return;
+
+    const updateProgress = () => {
+      if (video.duration) {
+        setProgress((video.currentTime / video.duration) * 100);
+      }
+    };
+
+    const handleLoadedMetadata = () => {
+      setDuration(video.duration);
+    };
+
+    video.addEventListener('timeupdate', updateProgress);
+    video.addEventListener('loadedmetadata', handleLoadedMetadata);
+
+    return () => {
+      video.removeEventListener('timeupdate', updateProgress);
+      video.removeEventListener('loadedmetadata', handleLoadedMetadata);
+    };
+  }, [url]);
+
+  const togglePlay = () => {
+    if (videoRef.current) {
+      if (isPlaying) {
+        videoRef.current.pause();
+      } else {
+        videoRef.current.play();
+      }
+      setIsPlaying(!isPlaying);
+    }
+  };
+
+  const handleSeek = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const time = (parseFloat(e.target.value) / 100) * duration;
+    if (videoRef.current) {
+      videoRef.current.currentTime = time;
+      setProgress(parseFloat(e.target.value));
+    }
+  };
+
+  const embedUrl = getVideoEmbedUrl(url);
+
+  if (embedUrl) {
+    return (
+      <div className="aspect-video w-full rounded-2xl overflow-hidden border border-white/10 shadow-2xl bg-black">
+        <iframe 
+          src={embedUrl} 
+          className="w-full h-full"
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+          allowFullScreen
+          title="Video preview"
+        />
+      </div>
+    );
+  }
+
+  return (
+    <div 
+      className="relative aspect-video w-full rounded-2xl overflow-hidden border border-white/10 shadow-2xl bg-black group/video"
+      onMouseEnter={() => setShowControls(true)}
+      onMouseLeave={() => setShowControls(false)}
+    >
+      <video
+        ref={videoRef}
+        src={url}
+        className="w-full h-full object-contain cursor-pointer"
+        onClick={togglePlay}
+        onPlay={() => setIsPlaying(true)}
+        onPause={() => setIsPlaying(false)}
+      />
+      
+      {/* Custom Controls Overlay */}
+      <motion.div 
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: showControls || !isPlaying ? 1 : 0, y: showControls || !isPlaying ? 0 : 10 }}
+        className="absolute inset-0 bg-linear-to-t from-black/80 via-transparent to-transparent flex flex-col justify-end p-6 pointer-events-none"
+      >
+        <div className="flex items-center gap-6 pointer-events-auto">
+          <button 
+            onClick={togglePlay}
+            className="w-12 h-12 rounded-full bg-accent/20 hover:bg-accent/40 backdrop-blur-xl border border-accent/30 flex items-center justify-center text-white transition-all transform active:scale-95"
+          >
+            {isPlaying ? <Pause size={20} fill="currentColor" /> : <Play size={20} fill="currentColor" className="ml-1" />}
+          </button>
+          
+          <div className="flex-1 flex flex-col gap-2">
+            <div className="relative group/progress h-6 flex items-center">
+              <input
+                type="range"
+                min="0"
+                max="100"
+                step="0.01"
+                value={progress}
+                onChange={handleSeek}
+                className="absolute inset-0 w-full opacity-0 cursor-pointer z-10"
+              />
+              <div className="w-full h-1 bg-white/10 rounded-full overflow-hidden">
+                <motion.div 
+                  className="h-full bg-accent relative"
+                  style={{ width: `${progress}%` }}
+                >
+                  <div className="absolute right-0 top-1/2 -translate-y-1/2 w-3 h-3 bg-white rounded-full shadow-lg scale-0 group-hover/progress:scale-100 transition-transform" />
+                </motion.div>
+              </div>
+            </div>
+            
+            <div className="flex justify-between items-center px-1">
+              <div className="text-[10px] font-mono font-bold text-white/50 tracking-widest flex items-center gap-2">
+                <span className="text-white">{formatTime(videoRef.current?.currentTime || 0)}</span>
+                <span>/</span>
+                <span>{formatTime(duration)}</span>
+              </div>
+              
+              <div className="text-[9px] font-black text-accent uppercase tracking-[0.2em] opacity-40">
+                Studio Quality Preview
+              </div>
+            </div>
+          </div>
+        </div>
+      </motion.div>
+
+      {!isPlaying && (
+        <div 
+          className="absolute inset-0 flex items-center justify-center bg-black/20 backdrop-blur-[2px] cursor-pointer"
+          onClick={togglePlay}
+        >
+          <motion.div 
+            initial={{ scale: 0.8, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            className="w-20 h-20 rounded-full bg-white/10 backdrop-blur-3xl border border-white/20 flex items-center justify-center group-hover/video:scale-110 transition-transform"
+          >
+            <Play size={32} className="text-white ml-2" fill="currentColor" />
+          </motion.div>
+        </div>
+      )}
+    </div>
+  );
+};
+
 const ProjectModal = ({ project, onClose }: { project: any, onClose: () => void }) => {
   const [lightboxImage, setLightboxImage] = useState<string | null>(null);
 
@@ -401,13 +609,7 @@ const ProjectModal = ({ project, onClose }: { project: any, onClose: () => void 
               </div>
 
               {project.videoUrl && (
-                <div className="aspect-video w-full rounded-2xl overflow-hidden border border-white/10 shadow-2xl">
-                  <iframe 
-                    src={project.videoUrl.replace('watch?v=', 'embed/')} 
-                    className="w-full h-full"
-                    allowFullScreen
-                  />
-                </div>
+                <VideoPlayer url={project.videoUrl} />
               )}
 
               <div className="prose prose-invert max-w-none">
@@ -446,10 +648,10 @@ const ProjectModal = ({ project, onClose }: { project: any, onClose: () => void 
               </div>
 
               <div className="flex gap-4 pt-4">
-                <a href={project.demo} className="btn-primary flex items-center gap-2">
+                <a href={project.demo} target="_blank" rel="noopener noreferrer" className="btn-primary flex items-center gap-2">
                   <ExternalLink size={16} /> Live Project
                 </a>
-                <a href={project.github} className="btn-secondary flex items-center gap-2">
+                <a href={project.github} target="_blank" rel="noopener noreferrer" className="btn-secondary flex items-center gap-2">
                   <Github size={16} /> Source Code
                 </a>
               </div>
@@ -530,144 +732,59 @@ const ProjectModal = ({ project, onClose }: { project: any, onClose: () => void 
 
 const Projects = ({ projects: liveProjects }: { projects: any[] }) => {
   const [activeCategories, setActiveCategories] = useState<string[]>(['All']);
-  const [activeTech, setActiveTech] = useState<string[]>([]);
-  const [activeTags, setActiveTags] = useState<string[]>([]);
   const [selectedProject, setSelectedProject] = useState<any>(null);
   
   const projects = liveProjects.length > 0 ? liveProjects : STATIC_PROJECTS;
-  
-  const categories = ['All', ...Array.from(new Set(projects.map(p => (p as any).category)))];
-  const allTech = Array.from(new Set(projects.flatMap(p => (p as any).tech))).sort();
-  const allTags = Array.from(new Set(projects.flatMap(p => (p as any).tags || []))).sort();
+  const categories = ['All', ...Array.from(new Set(projects.flatMap(p => [p.category, ...(p.categories || [])])))].filter(Boolean);
   
   const filteredProjects = projects.filter(p => {
-    const categoryMatch = activeCategories.includes('All') || activeCategories.includes((p as any).category);
-    const techMatch = activeTech.length === 0 || activeTech.some(t => (p as any).tech.includes(t));
-    const tagMatch = activeTags.length === 0 || activeTags.some(t => (p as any).tags?.includes(t));
-    return categoryMatch && techMatch && tagMatch;
+    const pCats = [p.category, ...(p.categories || [])].filter(Boolean);
+    return activeCategories.includes('All') || activeCategories.some(cat => pCats.includes(cat));
   });
 
   const toggleCategory = (cat: string) => {
-    if (cat === 'All') {
-      setActiveCategories(['All']);
-    } else {
-      setActiveCategories(prev => {
-        const next = prev.filter(c => c !== 'All');
-        if (next.includes(cat)) {
-          const filtered = next.filter(c => c !== cat);
-          return filtered.length === 0 ? ['All'] : filtered;
-        }
-        return [...next, cat];
-      });
-    }
-  };
-
-  const toggleTech = (tech: string) => {
-    setActiveTech(prev => 
-      prev.includes(tech) ? prev.filter(t => t !== tech) : [...prev, tech]
-    );
-  };
-
-  const toggleTags = (tag: string) => {
-    setActiveTags(prev => 
-      prev.includes(tag) ? prev.filter(t => t !== tag) : [...prev, tag]
-    );
+    setActiveCategories(cat === 'All' ? ['All'] : [cat]);
   };
 
   return (
-    <section id="projects" className="py-32 bg-bg-light dark:bg-[#050505] text-center relative overflow-hidden">
-      {/* Decorative background element */}
-      <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-accent/2 opacity-20 blur-[120px] -z-10 translate-x-1/2 -translate-y-1/2" />
-      
-      <div className="max-w-7xl mx-auto px-6">
-        <div className="flex flex-col items-center mb-10">
-          <span className="text-[10px] items-center gap-2 bg-accent/10 text-accent px-4 py-1.5 rounded-full font-bold uppercase tracking-widest inline-flex mb-6">
-            Portfolio
-          </span>
-          <motion.h2 
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            className="text-5xl md:text-6xl font-display font-bold text-gray-900 dark:text-white mb-6 tracking-tight"
-          >
-            Featured <span className="text-accent italic font-serif">Work</span>
-          </motion.h2>
-          <p className="max-w-2xl text-gray-500 dark:text-gray-400 text-lg">
-            A selection of projects reflecting my journey in technical excellence.
-          </p>
-        </div>
-        
-        {/* Advanced Filter UI - Multi Select */}
-        <div className="mb-20 space-y-8 bg-white/5 p-8 rounded-[40px] border border-white/10 backdrop-blur-xl">
-          <div className="space-y-4">
-            <h4 className="text-[10px] uppercase tracking-[0.4em] text-gray-500 font-bold">Categories</h4>
-            <div className="flex flex-wrap justify-center gap-2">
-              {categories.map(cat => (
-                <button 
-                  key={cat}
-                  onClick={() => toggleCategory(cat)}
-                  className={`px-6 py-2.5 rounded-full text-[11px] font-bold uppercase tracking-widest transition-all border ${
-                    activeCategories.includes(cat)
-                    ? 'bg-accent border-accent text-white shadow-[0_10px_20px_rgba(255,82,82,0.2)]' 
-                    : 'bg-white dark:bg-white/5 border-gray-100 dark:border-white/10 text-gray-500 hover:text-gray-900 dark:hover:text-white'
-                  }`}
-                >
-                  {cat}
-                </button>
-              ))}
-            </div>
+    <section id="projects" className="py-40 bg-[#080808] overflow-hidden">
+      <div className="max-w-7xl mx-auto px-8">
+        <div className="grid md:grid-cols-2 gap-12 items-end mb-32">
+          <div className="text-left">
+            <span className="section-subtitle">Behind the Designs</span>
+            <h2 className="section-title">Shaping Experiences That Make Life Simpler</h2>
           </div>
-          
-          {allTags.length > 0 && (
-            <div className="space-y-4">
-              <h4 className="text-[10px] uppercase tracking-[0.4em] text-gray-500 font-bold">Tags</h4>
-              <div className="flex flex-wrap justify-center gap-2">
-                {allTags.map(tag => (
-                  <button 
-                    key={tag}
-                    onClick={() => toggleTags(tag)}
-                    className={`px-4 py-1.5 rounded-xl text-[10px] font-bold uppercase tracking-wider transition-all border ${
-                      activeTags.includes(tag) 
-                      ? 'bg-accent/20 border-accent/40 text-accent' 
-                      : 'bg-transparent border-gray-100 dark:border-white/5 text-gray-400 hover:border-accent/20'
-                    }`}
-                  >
-                    {tag}
-                  </button>
-                ))}
+          <div className="text-left md:pl-20 space-y-8">
+            <p className="text-gray-400 text-lg leading-relaxed font-medium">
+              I'm a product designer focused on building clean, intuitive interfaces that solve real-world problems.
+            </p>
+            <a href="#contact" className="btn-accent inline-flex w-auto px-6 py-3">
+              Get in touch
+              <div className="w-8 h-8 bg-black/10 rounded-full flex items-center justify-center">
+                <ChevronRight size={14} className="text-white" />
               </div>
-            </div>
-          )}
-
-          <div className="space-y-4">
-            <h4 className="text-[10px] uppercase tracking-[0.4em] text-gray-500 font-bold">Technologies</h4>
-            <div className="flex flex-wrap justify-center gap-2 max-w-4xl mx-auto">
-              {allTech.map(t => (
-                <button 
-                  key={t}
-                  onClick={() => toggleTech(t)}
-                  className={`px-4 py-1.5 rounded-xl text-[10px] font-bold uppercase tracking-wider transition-all border ${
-                    activeTech.includes(t) 
-                    ? 'bg-accent/20 border-accent/40 text-accent' 
-                    : 'bg-transparent border-gray-100 dark:border-white/5 text-gray-400 hover:border-accent/20'
-                  }`}
-                >
-                  {t}
-                </button>
-              ))}
-            </div>
-            {(activeTech.length > 0 || activeTags.length > 0) && (
-               <button 
-                onClick={() => { setActiveTech([]); setActiveTags([]); }}
-                className="text-[9px] uppercase tracking-widest text-accent font-bold mt-4 hover:underline"
-               >
-                 Clear all filters
-               </button>
-            )}
+            </a>
           </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-10">
+        {/* Filter Section */}
+        <div className="mb-20 flex flex-wrap justify-start gap-3">
+          {categories.map(cat => (
+            <button 
+              key={cat}
+              onClick={() => toggleCategory(cat)}
+              className={`px-8 py-3 rounded-full text-[10px] font-bold uppercase tracking-[0.2em] transition-all border ${
+                activeCategories.includes(cat)
+                ? 'bg-accent border-accent text-white shadow-[0_10px_30px_rgba(255,77,0,0.2)]' 
+                : 'bg-white/5 border-white/10 text-gray-500 hover:text-white hover:border-white/20'
+              }`}
+            >
+              {cat}
+            </button>
+          ))}
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
           <AnimatePresence mode="popLayout">
             {filteredProjects.map((project: any) => (
               <motion.div 
@@ -676,69 +793,21 @@ const Projects = ({ projects: liveProjects }: { projects: any[] }) => {
                 initial={{ opacity: 0, scale: 0.9 }}
                 animate={{ opacity: 1, scale: 1 }}
                 exit={{ opacity: 0, scale: 0.9 }}
-                whileHover={{ 
-                  y: -12, 
-                  scale: 1.02,
-                  boxShadow: "0 40px 80px rgba(255, 82, 82, 0.15)"
-                }}
                 onClick={() => setSelectedProject(project)}
-                className="glass-card overflow-hidden flex flex-col items-start p-8 text-left cursor-pointer group shadow-sm transition-all duration-500"
+                className="group cursor-pointer relative aspect-[3/4] rounded-[60px] overflow-hidden border border-white/5 bg-white/[0.02]"
               >
-                <div className="relative w-full rounded-2xl overflow-hidden mb-8 shadow-inner">
-                  <ImageCarousel images={project.images} title={project.title} />
-                  <div className="absolute top-4 right-4 z-10 opacity-0 group-hover:opacity-100 transition-all translate-y-2 group-hover:translate-y-0">
-                    <div className="p-2 bg-white/10 backdrop-blur-md rounded-xl border border-white/20 text-white">
-                      <Maximize2 size={16} />
-                    </div>
-                  </div>
-                </div>
-                
-                <div className="flex items-center justify-between w-full mb-4">
-                  <h3 className="text-2xl font-bold text-gray-900 dark:text-white transition-colors group-hover:text-accent font-display tracking-tight">
-                    {project.title}
-                  </h3>
-                  <div className="text-[10px] font-mono font-bold text-gray-400 bg-white/5 px-2 py-1 rounded border border-white/5">
-                    0{projects.indexOf(project) + 1}
-                  </div>
-                </div>
-                
-                <Description 
-                  text={project.description} 
-                  className="text-sm text-gray-500 dark:text-gray-400 mb-8 line-clamp-3 leading-relaxed" 
+                <img 
+                  src={project.images[0]} 
+                  alt={project.title}
+                  className="w-full h-full object-cover grayscale opacity-50 group-hover:grayscale-0 group-hover:opacity-100 group-hover:scale-110 transition-all duration-1000"
+                  referrerPolicy="no-referrer"
                 />
-                
-                <div className="flex flex-wrap gap-2 mb-8">
-                  {project.tech.map((t: string) => (
-                    <button 
-                      key={t} 
-                      onClick={(e) => { e.stopPropagation(); toggleTech(t); }}
-                      className={`px-3 py-1 rounded-lg text-[9px] font-bold uppercase tracking-wider transition-all border ${
-                        activeTech.includes(t) 
-                        ? 'bg-accent/20 border-accent/40 text-accent' 
-                        : 'bg-white/5 dark:bg-white/5 border-transparent text-gray-500 hover:border-white/10'
-                      }`}
-                    >
-                      {t}
-                    </button>
-                  ))}
-                </div>
-                
-                <div className="flex w-full gap-3 mt-auto">
-                  <a 
-                    href={project.demo} 
-                    onClick={e => e.stopPropagation()}
-                    className="flex-1 btn-primary !py-2.5 !text-[10px] !uppercase !tracking-widest"
-                  >
-                    Launch Demo
-                  </a>
-                  <a 
-                    href={project.github} 
-                    onClick={e => e.stopPropagation()}
-                    className="p-2.5 bg-gray-50 dark:bg-white/5 border border-gray-100 dark:border-white/10 rounded-full text-gray-500 hover:text-accent hover:border-accent transition-all"
-                    title="Source Code"
-                  >
-                    <Github size={18} />
-                  </a>
+                <div className="absolute inset-0 bg-linear-to-t from-black via-black/20 to-transparent opacity-60" />
+                <div className="absolute bottom-12 left-12 right-12 text-left translate-y-4 group-hover:translate-y-0 transition-transform duration-500">
+                  <span className="text-accent text-[10px] font-bold uppercase tracking-[0.3em] mb-3 block">
+                    {project.categories?.length > 0 ? project.categories.join(' · ') : project.category}
+                  </span>
+                  <h3 className="text-3xl font-bold text-white font-display tracking-tight leading-none">{project.title}</h3>
                 </div>
               </motion.div>
             ))}
@@ -755,111 +824,199 @@ const Projects = ({ projects: liveProjects }: { projects: any[] }) => {
   );
 };
 
-const Experience = ({ experience, education }: { experience: any[], education: any[] }) => {
-  const [view, setView] = useState<'timeline' | 'list'>('timeline');
-  const combined = [...experience, ...education].sort((a, b) => (b.order || 0) - (a.order || 0));
+const TechStack = ({ projects, skills }: { projects: any[], skills: any[] }) => {
+  // Frequency of tech across projects
+  const techFrequency = projects.reduce((acc: any, p) => {
+    p.tech?.forEach((t: string) => {
+      acc[t] = (acc[t] || 0) + 1;
+    });
+    return acc;
+  }, {});
+
+  const barData = Object.entries(techFrequency)
+    .map(([name, count]) => ({ name, count: count as number }))
+    .sort((a, b) => b.count - a.count)
+    .slice(0, 8);
+
+  // Skills radar data
+  const categories = ['languages', 'technologies', 'tools'];
+  const radarData = categories.map(cat => {
+    const catSkills = skills.filter(s => s.category === cat);
+    const avgLevel = catSkills.length > 0 
+      ? catSkills.reduce((sum, s) => sum + s.level, 0) / catSkills.length 
+      : 0;
+    return {
+      category: cat.charAt(0).toUpperCase() + cat.slice(1),
+      level: Math.round(avgLevel),
+      fullMark: 100
+    };
+  });
+
+  // Top Skills Horizontal bar data
+  const topSkills = [...skills]
+    .sort((a, b) => b.level - a.level)
+    .slice(0, 5);
 
   return (
-    <section id="experience" className="py-32 bg-white dark:bg-[#050505] text-center border-t border-gray-100 dark:border-white/5 relative overflow-hidden">
-      <div className="max-w-5xl mx-auto px-6">
-        <motion.div 
-          initial={{ opacity: 0, y: 10 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          className="flex flex-col items-center mb-20"
-        >
-          <span className="text-[10px] items-center gap-2 bg-accent/10 text-accent px-4 py-1.5 rounded-full font-bold uppercase tracking-[0.3em] inline-flex mb-6">
-            Trajectory
-          </span>
-          <h2 className="text-4xl md:text-5xl font-display font-bold text-gray-900 dark:text-white mb-10">Experience & Education</h2>
-          <div className="flex bg-gray-100 dark:bg-white/5 rounded-2xl p-1.5 border border-gray-200 dark:border-white/10">
-            <button 
-              onClick={() => setView('timeline')}
-              className={`px-8 py-2.5 rounded-xl text-[10px] font-bold uppercase tracking-widest transition-all ${view === 'timeline' ? 'bg-white dark:bg-white/10 text-gray-900 dark:text-white shadow-xl' : 'text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'}`}
-            >
-              Timeline
-            </button>
-            <button 
-              onClick={() => setView('list')}
-              className={`px-8 py-2.5 rounded-xl text-[10px] font-bold uppercase tracking-widest transition-all ${view === 'list' ? 'bg-white dark:bg-white/10 text-gray-900 dark:text-white shadow-xl' : 'text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'}`}
-            >
-              Detailed List
-            </button>
-          </div>
-        </motion.div>
-
-        <motion.div 
-          initial={{ opacity: 0 }}
-          whileInView={{ opacity: 1 }}
-          viewport={{ once: true }}
-          className="relative"
-        >
-          {view === 'timeline' ? (
-            <div className="relative pt-12 min-h-[400px]">
-              <div className="timeline-line hidden md:block" />
-              <div className="space-y-24">
-                {combined.map((item, idx) => (
-                  <motion.div 
-                    key={idx}
-                    initial={{ opacity: 0, y: 20 }}
-                    whileInView={{ opacity: 1, y: 0 }}
-                    viewport={{ once: true }}
-                    className={`relative flex items-center justify-center ${idx % 2 === 0 ? 'md:justify-start md:pl-20' : 'md:justify-end md:pr-20'}`}
-                  >
-                    <div className="timeline-dot hidden md:block" />
-                    <div className="glass-card p-10 max-w-sm text-left hover:border-accent/30 transition-all border-white/10 group">
-                      <div className="text-accent font-mono text-[9px] uppercase font-bold tracking-[0.2em] mb-3 flex items-center justify-between">
-                        <span>{'role' in item ? 'Professional' : 'Academic'}</span>
-                        <span className="opacity-40">{item.period}</span>
-                      </div>
-                      <h4 className="text-gray-900 dark:text-white font-bold text-xl mb-1 group-hover:text-accent transition-colors">
-                        {'role' in item ? (item as any).role : (item as any).degree}
-                      </h4>
-                      <div className="text-gray-500 dark:text-gray-400 text-sm font-sans mb-4 italic">
-                        {'company' in item ? (item as any).company : (item as any).school}
-                      </div>
-                      {'description' in item && (
-                        <p className="text-xs text-gray-500 dark:text-gray-500 leading-relaxed font-sans line-clamp-3">
-                          {item.description}
-                        </p>
-                      )}
-                    </div>
-                  </motion.div>
-                ))}
+    <section id="tech-stack" className="py-40 bg-[#000000] overflow-hidden">
+      <div className="max-w-7xl mx-auto px-8">
+        <div className="grid md:grid-cols-2 gap-24 items-start mb-32">
+          <div className="text-left">
+            <span className="section-subtitle">Infrastructure</span>
+            <h2 className="section-title">Technical <br /> Architecture</h2>
+            <p className="text-gray-400 text-lg leading-relaxed font-medium mt-12 max-w-sm">
+              Visualizing the collision of design systems and scalable engineering. I build with speed and stability in mind.
+            </p>
+            
+            <div className="mt-16 space-y-10">
+              <div className="flex items-start gap-4">
+                <div className="w-12 h-12 bg-accent/10 rounded-2xl flex items-center justify-center text-accent shrink-0">
+                  <Zap size={24} />
+                </div>
+                <div>
+                  <h4 className="text-white font-bold text-lg">Performance First</h4>
+                  <p className="text-gray-500 text-sm mt-1">Optimization isn't an afterthought, it's the foundation of my development cycle.</p>
+                </div>
+              </div>
+              <div className="flex items-start gap-4">
+                <div className="w-12 h-12 bg-white/5 rounded-2xl flex items-center justify-center text-gray-400 shrink-0">
+                  <Terminal size={24} />
+                </div>
+                <div>
+                  <h4 className="text-white font-bold text-lg">Clean Implementation</h4>
+                  <p className="text-gray-500 text-sm mt-1">Modular, typed, and well-documented code that scales with the product.</p>
+                </div>
               </div>
             </div>
-          ) : (
-            <div className="space-y-6 text-left max-w-3xl mx-auto">
-              {combined.map((item, idx) => (
-                <motion.div 
-                  key={idx}
-                  initial={{ opacity: 0, x: -20 }}
-                  whileInView={{ opacity: 1, x: 0 }}
-                  transition={{ delay: idx * 0.1 }}
-                  className="glass-card p-10 flex flex-col md:flex-row justify-between items-start md:items-center gap-8 hover:border-accent/40 bg-white/5 border-white/5 transition-all group"
-                >
-                  <div className="flex gap-8 items-start">
-                    <div className={`w-1.5 h-16 rounded-full ${'role' in item ? 'bg-accent shadow-[0_0_20px_rgba(255,82,82,0.3)]' : 'bg-purple-500 shadow-[0_0_20px_rgba(168,85,247,0.3)]'} shrink-0 mt-1`} />
-                    <div>
-                      <div className="flex items-center gap-3 mb-2">
-                        <span className={`text-[8px] px-2 py-0.5 rounded font-bold uppercase tracking-widest ${'role' in item ? 'bg-accent/10 text-accent' : 'bg-purple-500/10 text-purple-500'}`}>
-                           {'role' in item ? 'EXP' : 'EDU'}
-                        </span>
-                        <h4 className="text-gray-900 dark:text-white font-bold text-xl leading-tight group-hover:text-accent transition-colors">
-                          {'role' in item ? (item as any).role : (item as any).degree}
-                        </h4>
+          </div>
+
+          <div className="space-y-12">
+            <div className="glass-card p-10 relative overflow-hidden">
+              <div className="absolute top-0 right-0 p-8 opacity-10">
+                <BarChartIcon size={120} className="text-accent" />
+              </div>
+              <h3 className="text-xl font-display font-bold text-white mb-10 flex items-center gap-3">
+                <div className="w-2 h-2 rounded-full bg-accent" />
+                Tech Frequency in Projects
+              </h3>
+              <div className="h-[300px] w-full">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={barData} margin={{ top: 20, right: 30, left: 0, bottom: 0 }}>
+                    <XAxis 
+                      dataKey="name" 
+                      stroke="#4b5563" 
+                      fontSize={10} 
+                      tickLine={false} 
+                      axisLine={false}
+                      dy={10}
+                    />
+                    <YAxis 
+                      stroke="#4b5563" 
+                      fontSize={10} 
+                      tickLine={false} 
+                      axisLine={false}
+                    />
+                    <RechartsTooltip 
+                      contentStyle={{ backgroundColor: '#0a0a0c', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '12px', fontSize: '10px' }}
+                      itemStyle={{ color: '#ff4d00' }}
+                      cursor={{ fill: 'rgba(255,255,255,0.03)' }}
+                    />
+                    <Bar dataKey="count" radius={[10, 10, 0, 0]}>
+                      {barData.map((_entry, index) => (
+                        <Cell key={`cell-${index}`} fill={index === 0 ? '#ff4d00' : 'rgba(255,255,255,0.08)'} />
+                      ))}
+                    </Bar>
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+              <div className="glass-card p-8">
+                <h3 className="text-[10px] font-bold text-gray-500 uppercase tracking-[0.3em] mb-8">Skill Proficiency</h3>
+                <div className="h-[200px] w-full">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <RadarChart cx="50%" cy="50%" outerRadius="80%" data={radarData}>
+                      <PolarGrid stroke="rgba(255,255,255,0.05)" />
+                      <PolarAngleAxis dataKey="category" stroke="#4b5563" fontSize={10} />
+                      <Radar
+                        name="Skills"
+                        dataKey="level"
+                        stroke="#ff4d00"
+                        fill="#ff4d00"
+                        fillOpacity={0.2}
+                      />
+                    </RadarChart>
+                  </ResponsiveContainer>
+                </div>
+              </div>
+
+              <div className="glass-card p-8 flex flex-col justify-center">
+                <h3 className="text-[10px] font-bold text-gray-500 uppercase tracking-[0.3em] mb-6">Expertise Level</h3>
+                <div className="space-y-5">
+                  {topSkills.map((skill, idx) => (
+                    <div key={idx} className="space-y-1.5">
+                      <div className="flex justify-between text-[11px] font-bold">
+                        <span className="text-white">{skill.name}</span>
+                        <span className="text-accent">{skill.level}%</span>
                       </div>
-                      <div className="text-gray-500 dark:text-gray-400 font-sans text-sm">{'company' in item ? (item as any).company : (item as any).school}</div>
+                      <div className="h-1 bg-white/5 rounded-full overflow-hidden">
+                        <motion.div 
+                          initial={{ width: 0 }}
+                          whileInView={{ width: `${skill.level}%` }}
+                          transition={{ duration: 1, ease: "easeOut" }}
+                          className="h-full bg-accent"
+                        />
+                      </div>
                     </div>
-                  </div>
-                  <div className="text-gray-400 font-mono text-[10px] uppercase font-bold tracking-widest bg-white/5 py-2 px-5 rounded-xl border border-white/10 group-hover:bg-accent/10 group-hover:text-accent transition-all">
-                    {item.period}
-                  </div>
-                </motion.div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+};
+
+const Experience = ({ experience, education }: { experience: any[], education: any[] }) => {
+  return (
+    <section className="py-40 bg-[#080808]">
+      <div className="max-w-7xl mx-auto px-8">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-32">
+          <div>
+            <span className="section-subtitle">Experience</span>
+            <h2 className="section-title">Career Path</h2>
+            <div className="space-y-16 mt-16">
+              {experience.map((exp, idx) => (
+                <div key={idx} className="group relative">
+                  <span className="text-accent text-[10px] font-black tracking-widest block mb-4">/ {exp.period || exp.date}</span>
+                  <h3 className="text-3xl font-display font-bold text-white mb-2 group-hover:text-accent transition-colors">{exp.role}</h3>
+                  <p className="text-gray-400 font-medium text-lg mb-6">{exp.company}</p>
+                  <p className="text-gray-500 leading-relaxed text-sm max-w-sm">{exp.description}</p>
+                </div>
               ))}
             </div>
-          )}
-        </motion.div>
+          </div>
+
+          <div>
+            <span className="section-subtitle">Education</span>
+            <h2 className="section-title">Academics</h2>
+            <div className="space-y-16 mt-16">
+              {education.map((edu, idx) => (
+                <div key={idx} className="group relative">
+                  <span className="text-accent text-[10px] font-black tracking-widest block mb-4">/ {edu.period || edu.date}</span>
+                  <h3 className="text-3xl font-display font-bold text-white mb-2 group-hover:text-accent transition-colors">{edu.degree}</h3>
+                  <p className="text-gray-400 font-medium text-lg mb-4">{edu.school}</p>
+                  <div className="px-4 py-1.5 bg-white/5 border border-white/10 rounded-full inline-block text-[10px] font-bold text-accent uppercase tracking-widest">
+                    Result: {edu.cgpa}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
       </div>
     </section>
   );
@@ -869,40 +1026,29 @@ const Achievements = ({ achievements }: { achievements: any[] }) => {
   const currentAchievements = achievements.length > 0 ? achievements.sort((a,b) => (b.order || 0) - (a.order || 0)) : ACHIEVEMENTS;
 
   return (
-    <section id="achievements" className="py-32 bg-bg-light dark:bg-[#050505] text-center border-t border-gray-100 dark:border-white/5">
-      <div className="max-w-6xl mx-auto px-6">
-        <span className="text-[10px] items-center gap-2 bg-accent/10 text-accent px-4 py-1.5 rounded-full font-bold uppercase tracking-[0.3em] inline-flex mb-6">
-          Awards
-        </span>
-        <motion.h2 
-          initial={{ opacity: 0, scale: 0.95 }}
-          whileInView={{ opacity: 1, scale: 1 }}
-          viewport={{ once: true }}
-          className="text-4xl md:text-6xl font-display font-bold text-gray-900 dark:text-white mb-20"
-        >
-          Key Accomplishments
-        </motion.h2>
+    <section className="py-40 bg-[#080808]">
+      <div className="max-w-7xl mx-auto px-8 border-t border-white/5 pt-40">
+        <div className="grid md:grid-cols-2 items-end mb-24">
+           <div>
+             <span className="section-subtitle">Recognition</span>
+             <h2 className="section-title">Awards & <br /> Certifications</h2>
+           </div>
+           <p className="text-gray-500 text-lg md:pl-20">A collection of industry-recognized achievements and technical excellence milestones.</p>
+        </div>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
           {currentAchievements.map((ach, idx) => (
             <motion.div 
               key={idx}
               initial={{ opacity: 0, y: 30 }}
               whileInView={{ opacity: 1, y: 0 }}
-              transition={{ delay: idx * 0.1, duration: 0.6 }}
-              viewport={{ once: true }}
-              whileHover={{ y: -10 }}
-              className="glass-card !bg-white/5 !border-white/10 p-12 flex flex-col items-center justify-center text-center shadow-xl hover:border-accent/40 shadow shadow-accent/5"
+              className="glass-card p-12 hover:border-accent/40 transition-all group"
             >
-              <div className="w-20 h-20 bg-accent/10 rounded-[32px] flex items-center justify-center text-accent mb-8 shadow-inner">
-                {ach.category === 'Award' ? <Award size={36} /> : <Cpu size={36} />}
+              <div className="w-12 h-12 bg-white/5 rounded-2xl flex items-center justify-center text-accent mb-10 group-hover:scale-110 transition-transform">
+                {ach.category === 'Award' ? <Award size={24} /> : <Cpu size={24} />}
               </div>
-              <h4 className="text-gray-900 dark:text-white font-bold text-2xl mb-3 tracking-tight">{ach.title}</h4>
-              <p className="text-[10px] text-gray-500 uppercase tracking-[0.3em] font-mono font-bold mb-6 italic">{ach.issuer} • {ach.date}</p>
-              {ach.description && (
-                <p className="text-sm text-gray-500 dark:text-gray-500 font-sans leading-relaxed">
-                  {ach.description}
-                </p>
-              )}
+              <h4 className="text-white font-display font-bold text-2xl mb-3 tracking-tight">{ach.title}</h4>
+              <p className="text-accent text-[10px] font-bold uppercase tracking-widest mb-6">{ach.issuer}</p>
+              <p className="text-gray-500 text-sm leading-relaxed">{ach.description}</p>
             </motion.div>
           ))}
         </div>
@@ -919,100 +1065,43 @@ const Testimonials = ({ testimonials }: { testimonials: any[] }) => {
   const prev = () => setIndex((index - 1 + currentTestimonials.length) % currentTestimonials.length);
 
   return (
-    <section id="testimonials" className="py-32 bg-white dark:bg-[#050505] text-center overflow-hidden border-t border-gray-100 dark:border-white/5">
-      <div className="max-w-5xl mx-auto px-6 relative">
-        <span className="text-[10px] items-center gap-2 bg-accent/10 text-accent px-4 py-1.5 rounded-full font-bold uppercase tracking-[0.3em] inline-flex mb-6">
-          Vouch
-        </span>
-        <motion.h2 
-          initial={{ opacity: 0, y: 10 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          className="text-4xl md:text-6xl font-display font-bold text-gray-900 dark:text-white mb-20"
-        >
-          Kind Words
-        </motion.h2>
+    <section className="py-40 bg-[#080808]">
+      <div className="max-w-7xl mx-auto px-8 text-center bg-accent/5 rounded-[80px] py-32 border border-accent/10 relative overflow-hidden">
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[300px] bg-accent/10 blur-[120px] rounded-full" />
+        
+        <span className="section-subtitle">Kind Words</span>
+        <h2 className="section-title mb-24">What people are saying</h2>
 
-        <div className="relative group max-w-4xl mx-auto">
+        <div className="max-w-4xl mx-auto relative">
           <AnimatePresence mode="wait">
             <motion.div
               key={index}
-              initial={{ opacity: 0, x: 100, scale: 0.9 }}
-              animate={{ opacity: 1, x: 0, scale: 1 }}
-              exit={{ opacity: 0, x: -100, scale: 0.9 }}
-              transition={{ type: 'spring', damping: 20, stiffness: 100 }}
-              className="glass-card !bg-gray-50 dark:!bg-white/5 !border-white/10 p-12 md:p-24 relative shadow-2xl"
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 1.05 }}
+              className="space-y-16"
             >
-              <div className="text-accent mb-12 opacity-10 flex justify-center">
-                <Layers size={100} strokeWidth={1} />
-              </div>
-              <p className="text-xl md:text-2xl text-gray-700 dark:text-gray-200 font-sans italic leading-relaxed mb-16 relative z-10">
+              <p className="text-3xl md:text-5xl text-white font-display font-medium leading-[1.2] tracking-tight">
                 "{currentTestimonials[index].quote}"
               </p>
-              <div className="flex flex-col items-center justify-center gap-6">
-                <div className="relative">
-                    <div className="absolute inset-0 bg-accent blur-xl opacity-20" />
-                    <img 
-                      src={currentTestimonials[index].image} 
-                      alt={currentTestimonials[index].name} 
-                      className="w-20 h-20 rounded-full border-2 border-accent/40 relative z-10 object-cover shadow-2xl"
-                      referrerPolicy="no-referrer"
-                    />
-                </div>
-                <div className="text-center">
-                  <h4 className="font-bold text-lg text-gray-900 dark:text-white mb-1">{currentTestimonials[index].name}</h4>
-                  <p className="text-[10px] text-gray-500 dark:text-gray-400 uppercase font-mono tracking-[0.4em] font-bold">{currentTestimonials[index].role}</p>
+              <div className="flex items-center justify-center gap-6">
+                <img 
+                  src={currentTestimonials[index].image} 
+                  alt={currentTestimonials[index].name} 
+                  className="w-16 h-16 rounded-full border border-white/20 object-cover"
+                  referrerPolicy="no-referrer"
+                />
+                <div className="text-left">
+                  <h4 className="text-white font-bold text-xl">{currentTestimonials[index].name}</h4>
+                  <p className="text-accent text-[10px] font-bold uppercase tracking-widest">{currentTestimonials[index].role}</p>
                 </div>
               </div>
             </motion.div>
           </AnimatePresence>
 
-          <div className="absolute top-1/2 -left-4 md:-left-20 -translate-y-1/2 z-10 flex flex-col gap-4">
-            <button onClick={prev} className="p-5 rounded-full bg-white dark:bg-black border border-white/10 shadow-2xl hover:text-accent hover:scale-110 active:scale-95 transition-all text-gray-400"><ChevronLeft size={24} /></button>
-          </div>
-          <div className="absolute top-1/2 -right-4 md:-right-20 -translate-y-1/2 z-10 flex flex-col gap-4">
-            <button onClick={next} className="p-5 rounded-full bg-white dark:bg-black border border-white/10 shadow-2xl hover:text-accent hover:scale-110 active:scale-95 transition-all text-gray-400"><ChevronRight size={24} /></button>
-          </div>
-          
-          <div className="flex justify-center gap-3 mt-12">
-            {currentTestimonials.map((_, i) => (
-                <button 
-                  key={i} 
-                  onClick={() => setIndex(i)}
-                  className={`h-1 rounded-full transition-all duration-500 ${i === index ? 'w-12 bg-accent' : 'w-4 bg-white/10 hover:bg-white/20'}`}
-                />
-            ))}
-          </div>
-        </div>
-      </div>
-    </section>
-  );
-};
-
-const Goals = ({ goals }: { goals: any }) => {
-  return (
-    <section id="goals" className="py-32 bg-bg-light dark:bg-[#050505] relative overflow-hidden border-t border-gray-100 dark:border-white/5">
-      <div className="absolute bottom-0 right-0 w-[600px] h-[600px] bg-accent/5 rounded-full blur-[120px] -z-10" />
-      <div className="max-w-6xl mx-auto px-6">
-        <div className="flex flex-col md:flex-row items-center gap-20">
-          <div className="flex-1 text-left">
-            <span className="text-[10px] items-center gap-2 bg-accent/10 text-accent px-4 py-1.5 rounded-full font-bold uppercase tracking-[0.3em] inline-flex mb-6">
-              Vision
-            </span>
-            <h2 className="text-4xl md:text-6xl font-display font-bold text-gray-900 dark:text-white mb-10 leading-tight">
-              Projecting <span className="text-accent italic font-serif">Future</span> <br />
-              Milestones
-            </h2>
-            <div className="prose prose-invert dark:prose-p:text-gray-400 prose-p:text-gray-600 prose-p:text-lg italic font-serif">
-              "{goals.current || 'Evolving through continuous technical transformation.'}"
-            </div>
-          </div>
-          <div className="w-full md:w-80 h-80 bg-accent/5 rounded-[60px] border border-accent/10 flex items-center justify-center shadow-2xl relative group">
-            <div className="absolute inset-10 border-2 border-dashed border-accent/20 rounded-[40px] animate-pulse" />
-            <div className="relative z-10 text-center">
-                <Cpu size={80} className="text-accent opacity-20 mb-4 group-hover:scale-110 transition-transform duration-700" />
-                <div className="text-[10px] font-mono font-bold text-accent uppercase tracking-widest">Active Evolution</div>
-            </div>
+          <div className="flex justify-center gap-8 mt-24">
+            <button onClick={prev} className="p-5 rounded-full border border-white/10 text-white hover:bg-white/10 transition-all hover:scale-110"><ChevronLeft size={20} /></button>
+            <button onClick={next} className="p-5 rounded-full border border-white/10 text-white hover:bg-white/10 transition-all hover:scale-110"><ChevronRight size={20} /></button>
           </div>
         </div>
       </div>
@@ -1022,145 +1111,96 @@ const Goals = ({ goals }: { goals: any }) => {
 
 const Contact = () => {
   const [formData, setFormData] = useState({ name: '', email: '', message: '' });
-  const [errors, setErrors] = useState<any>({});
-  const [touched, setTouched] = useState<any>({});
   const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
-
-  const validate = (data = formData) => {
-    const newErrors: any = {};
-    if (!data.name.trim()) newErrors.name = "Name is required";
-    if (!data.email.trim()) newErrors.email = "Email is required";
-    else if (!/^\S+@\S+\.\S+$/.test(data.email)) newErrors.email = "Invalid email format";
-    if (!data.message.trim()) newErrors.message = "Message cannot be empty";
-    return newErrors;
-  };
-
-  useEffect(() => {
-    if (Object.keys(touched).length > 0) {
-      setErrors(validate());
-    }
-  }, [formData, touched]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setTouched({ name: true, email: true, message: true });
-    const newErrors = validate();
-    setErrors(newErrors);
-
-    if (Object.keys(newErrors).length === 0) {
-      setStatus('loading');
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      setStatus('success');
-      setFormData({ name: '', email: '', message: '' });
-      setTouched({});
-      setTimeout(() => setStatus('idle'), 5000);
-    }
-  };
-
-  const handleBlur = (field: string) => {
-    setTouched({ ...touched, [field]: true });
+    setStatus('loading');
+    await new Promise(resolve => setTimeout(resolve, 2000));
+    setStatus('success');
+    setFormData({ name: '', email: '', message: '' });
+    setTimeout(() => setStatus('idle'), 5000);
   };
 
   return (
-    <section id="contact" className="py-32 bg-white dark:bg-[#050505] text-center">
-      <div className="max-w-2xl mx-auto px-6">
-        <span className="badge-orange mb-6 inline-block">Connect</span>
-        <motion.h2 
-          initial={{ opacity: 0, y: 10 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          className="text-4xl md:text-5xl font-display font-bold text-gray-900 dark:text-white mb-16"
-        >
-          Let's Work Together
-        </motion.h2>
-        
-        <AnimatePresence mode="wait">
-          {status === 'success' ? (
-            <motion.div 
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.9 }}
-              className="glass-card !bg-green-500/5 !border-green-500/20 p-12 text-center"
+    <section id="contact" className="py-40 bg-[#000000]">
+      <div className="max-w-7xl mx-auto px-8">
+        <div className="grid lg:grid-cols-2 gap-24 items-center">
+          <div>
+            <span className="section-subtitle">Get in touch</span>
+            <h2 className="section-title !text-6xl md:!text-8xl">Let's build <br /> something <br /> <span className="italic font-serif">Legendary.</span></h2>
+            <p className="text-gray-500 text-lg mt-12 max-w-sm">
+              Currently accepting new projects and collaborations for 2026.
+            </p>
+          </div>
+          
+          <form onSubmit={handleSubmit} className="space-y-10">
+            <div className="space-y-6">
+              <input 
+                type="text" 
+                placeholder="Name"
+                value={formData.name}
+                onChange={e => setFormData({...formData, name: e.target.value})}
+                className="w-full bg-transparent border-b-2 border-white/10 py-6 text-2xl text-white focus:border-accent transition-all outline-none"
+                required
+              />
+              <input 
+                type="email" 
+                placeholder="Email Address"
+                value={formData.email}
+                onChange={e => setFormData({...formData, email: e.target.value})}
+                className="w-full bg-transparent border-b-2 border-white/10 py-6 text-2xl text-white focus:border-accent transition-all outline-none"
+                required
+              />
+              <textarea 
+                rows={4}
+                placeholder="Project Description"
+                value={formData.message}
+                onChange={e => setFormData({...formData, message: e.target.value})}
+                className="w-full bg-transparent border-b-2 border-white/10 py-6 text-2xl text-white focus:border-accent transition-all outline-none resize-none"
+                required
+              />
+            </div>
+            <button 
+              type="submit"
+              disabled={status === 'loading'}
+              className="btn-accent px-12 py-5 text-sm !pr-5"
             >
-              <div className="w-16 h-16 bg-green-500 rounded-full flex items-center justify-center mx-auto mb-6">
-                <Send className="text-white" size={28} />
+              {status === 'loading' ? 'Transmitting...' : status === 'success' ? 'Link Established!' : 'Send Transmission'}
+              <div className="w-10 h-10 bg-black/20 rounded-full flex items-center justify-center">
+                <ChevronRight size={18} className="text-white" />
               </div>
-              <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">Message Sent!</h3>
-              <p className="text-gray-500 dark:text-gray-400">Thank you for reaching out. I'll get back to you within 24 hours.</p>
-            </motion.div>
-          ) : (
-            <motion.div 
-              initial={{ opacity: 0, y: 30 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              className="glass-card !bg-gray-50 dark:!bg-white/5 !border-gray-200 dark:!border-white/10 p-8 md:p-12 relative overflow-hidden shadow-sm"
+            </button>
+          </form>
+        </div>
+
+        <div className="mt-40 pt-20 border-t border-white/5 flex flex-col md:flex-row items-center justify-between gap-12 text-center md:text-left">
+          <p className="text-gray-600 font-bold uppercase tracking-widest text-[10px]">Sudharsan S. Portfolio &copy; 2026</p>
+          <div className="flex gap-10">
+            <a 
+              href="https://github.com/dharsan432006-ops" 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="text-gray-500 hover:text-white transition-all hover:scale-110"
             >
-              <form onSubmit={handleSubmit} className="space-y-6 text-left">
-                <div className="grid md:grid-cols-2 gap-6">
-                  <div className="space-y-2">
-                    <label className="text-[10px] uppercase tracking-widest font-bold text-gray-400 ml-2">Your Name</label>
-                    <input 
-                      type="text" 
-                      placeholder="e.g. John Doe" 
-                      value={formData.name}
-                      onBlur={() => handleBlur('name')}
-                      onChange={(e) => {
-                        setFormData({...formData, name: e.target.value});
-                      }}
-                      className={`w-full px-6 py-4 rounded-2xl bg-white dark:bg-black/40 border ${touched.name && errors.name ? 'border-red-500 focus:border-red-500' : 'border-gray-200 dark:border-white/10'} text-gray-900 dark:text-white placeholder:text-gray-400 focus:outline-hidden focus:border-accent transition-all text-sm`} 
-                    />
-                    {touched.name && errors.name && <p className="text-[10px] text-red-500 font-bold mt-1 ml-2 uppercase tracking-wider">{errors.name}</p>}
-                  </div>
-                  <div className="space-y-2">
-                    <label className="text-[10px] uppercase tracking-widest font-bold text-gray-400 ml-2">Email Address</label>
-                    <input 
-                      type="email" 
-                      placeholder="e.g. john@example.com" 
-                      value={formData.email}
-                      onBlur={() => handleBlur('email')}
-                      onChange={(e) => {
-                        setFormData({...formData, email: e.target.value});
-                      }}
-                      className={`w-full px-6 py-4 rounded-2xl bg-white dark:bg-black/40 border ${touched.email && errors.email ? 'border-red-500 focus:border-red-500' : 'border-gray-200 dark:border-white/10'} text-gray-900 dark:text-white placeholder:text-gray-400 focus:outline-hidden focus:border-accent transition-all text-sm`} 
-                    />
-                    {touched.email && errors.email && <p className="text-[10px] text-red-500 font-bold mt-1 ml-2 uppercase tracking-wider">{errors.email}</p>}
-                  </div>
-                </div>
-                <div className="space-y-2">
-                  <label className="text-[10px] uppercase tracking-widest font-bold text-gray-400 ml-2">Message</label>
-                  <textarea 
-                    rows={4} 
-                    placeholder="Tell me about your project..." 
-                    value={formData.message}
-                    onBlur={() => handleBlur('message')}
-                    onChange={(e) => {
-                      setFormData({...formData, message: e.target.value});
-                    }}
-                    className={`w-full px-6 py-4 rounded-2xl bg-white dark:bg-black/40 border ${touched.message && errors.message ? 'border-red-500 focus:border-red-500' : 'border-gray-200 dark:border-white/10'} text-gray-900 dark:text-white placeholder:text-gray-400 focus:outline-hidden focus:border-accent transition-all text-sm resize-none`} 
-                  />
-                  {touched.message && errors.message && <p className="text-[10px] text-red-500 font-bold mt-1 ml-2 uppercase tracking-wider">{errors.message}</p>}
-                </div>
-                <button 
-                  disabled={status === 'loading'}
-                  className="btn-primary w-full disabled:opacity-50 disabled:cursor-not-allowed justify-center"
-                >
-                  {status === 'loading' ? (
-                    <motion.div 
-                      animate={{ rotate: 360 }}
-                      transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
-                      className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full"
-                    />
-                  ) : 'Send Message'}
-                </button>
-              </form>
-            </motion.div>
-          )}
-        </AnimatePresence>
-        <div className="flex justify-center gap-6 mt-16">
-          <a href="#" className="p-4 rounded-full bg-gray-50 border border-gray-100 text-gray-600 hover:text-accent hover:border-accent transition-all animate-fade-in" style={{ animationDelay: '0.1s' }}><Github size={22} /></a>
-          <a href="#" className="p-4 rounded-full bg-gray-50 border border-gray-100 text-gray-600 hover:text-accent hover:border-accent transition-all animate-fade-in" style={{ animationDelay: '0.2s' }}><Linkedin size={22} /></a>
-          <a href="#" className="p-4 rounded-full bg-gray-50 border border-gray-100 text-gray-600 hover:text-accent hover:border-accent transition-all animate-fade-in" style={{ animationDelay: '0.3s' }}><Twitter size={22} /></a>
-          <a href="#" className="p-4 rounded-full bg-gray-50 border border-gray-100 text-gray-600 hover:text-accent hover:border-accent transition-all animate-fade-in" style={{ animationDelay: '0.4s' }}><PenTool size={22} /></a>
+              <Github size={20} />
+            </a>
+            <a 
+              href="https://linkedin.com/in/sudharsan-s-7b573135" 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="text-gray-500 hover:text-white transition-all hover:scale-110"
+            >
+              <Linkedin size={20} />
+            </a>
+            <a 
+              href="mailto:Sudharsan4326@gmail.com" 
+              className="text-gray-500 hover:text-white transition-all hover:scale-110"
+            >
+              <Mail size={20} />
+            </a>
+          </div>
+          <p className="text-white font-display font-black tracking-tighter uppercase text-sm italic">Engineering Innovation.</p>
         </div>
       </div>
     </section>
@@ -1209,103 +1249,58 @@ const BackToTop = () => {
 };
 
 export default function App() {
-  const [theme, setTheme] = useState<'light' | 'dark'>(() => {
-    return (localStorage.getItem('theme') as any) || 'light';
-  });
   const [profile, setProfile] = useState<any>(null);
   const [projects, setProjects] = useState<any[]>([]);
-  const [skills, setSkills] = useState<any>(SKILLS);
+  const [skills, setSkills] = useState<any[]>([]);
   const [experience, setExperience] = useState<any[]>(EXPERIENCE);
   const [education, setEducation] = useState<any[]>(EDUCATION);
   const [achievements, setAchievements] = useState<any[]>(ACHIEVEMENTS);
   const [testimonials, setTestimonials] = useState<any[]>(TESTIMONIALS);
-  const [goals, setGoals] = useState<any>({ current: 'Building future-ready AI solutions.' });
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    document.documentElement.classList.toggle('dark', theme === 'dark');
-    localStorage.setItem('theme', theme);
-
+    document.documentElement.classList.add('dark');
+    
     const unsubs = [
       subscribeToConfig('profile', setProfile),
       subscribeToCollection('projects', setProjects),
-      subscribeToCollection('skills', (data) => {
-        if (data.length > 0) {
-          const categorized: any = { languages: [], technologies: [], tools: [] };
-          data.forEach(s => categorized[s.category]?.push(s));
-          setSkills(categorized);
-        }
-      }),
+      subscribeToCollection('skills', setSkills),
       subscribeToCollection('experience', setExperience),
       subscribeToCollection('education', setEducation),
       subscribeToCollection('achievements', setAchievements),
-      subscribeToCollection('testimonials', setTestimonials),
-      subscribeToConfig('goals', setGoals)
+      subscribeToCollection('testimonials', setTestimonials)
     ];
 
     setLoading(false);
-
-    return () => {
-      unsubs.forEach(unsub => unsub());
-    };
-  }, [theme]);
-
-  const toggleTheme = () => setTheme(prev => (prev === 'light' ? 'dark' : 'light'));
+    return () => unsubs.forEach(unsub => unsub());
+  }, []);
 
   return (
     <HelmetProvider>
-      <div className="selection:bg-accent/30 dark:bg-[#050505] transition-colors duration-300">
+      <div className="bg-black text-white selection:bg-accent/30 min-h-screen">
         <Helmet>
-          <title>Sudharsan S | Aspiring Software Engineer Portfolio</title>
-          <meta name="description" content="Portfolio of Sudharsan S, skilled in building AI-powered web applications using React, TypeScript, and modern APIs." />
-          <meta property="og:title" content="Sudharsan S Portfolio" />
-          <meta property="og:type" content="website" />
-          <script type="application/ld+json">
-            {JSON.stringify({
-              "@context": "https://schema.org",
-              "@type": "Person",
-              "name": "Sudharsan S",
-              "jobTitle": "Software Engineer",
-              "url": "https://sudharsan-portfolio.com",
-              "keywords": "React, TypeScript, AI, Software Engineer, Portfolio"
-            })}
-          </script>
+          <title>Sudharsan S. | Computer Scientist Portfolio</title>
+          <meta name="description" content="Portfolio of Sudharsan S., focusing on AI, Full-stack Development, and Software Engineering." />
         </Helmet>
         
         <ScrollProgress />
-        <Navbar theme={theme} toggleTheme={toggleTheme} />
+        <Navbar />
         
         <main>
           <header id="home">
             <Hero profile={profile} />
+            <Brands />
           </header>
           
-          <About skills={skills} />
+          <About profile={profile} />
           <Projects projects={projects} />
+          <TechStack projects={projects} skills={skills.length > 0 ? skills : Object.values(SKILLS).flat()} />
           <Experience experience={experience} education={education} />
           <Achievements achievements={achievements} />
-          <Goals goals={goals} />
-          <Testimonials testimonials={testimonials} />
           <Contact />
         </main>
         
         <BackToTop />
-
-        {/* Sync Status Overlay */}
-        <div className="fixed bottom-8 left-8 z-[200] pointer-events-none hidden md:block">
-          <motion.div 
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="p-3 glass-card !bg-white/10 dark:!bg-black/40 backdrop-blur-xl border border-white/10 rounded-full"
-          >
-            <div className="flex items-center gap-2 px-2">
-              <div className={`w-2 h-2 rounded-full ${loading ? 'bg-amber-500 animate-pulse' : 'bg-green-500'}`} />
-              <span className="text-[9px] font-bold text-gray-800 dark:text-white uppercase tracking-widest">
-                {loading ? 'Cloud Syncing...' : 'Real-time Linked'}
-              </span>
-            </div>
-          </motion.div>
-        </div>
       </div>
     </HelmetProvider>
   );

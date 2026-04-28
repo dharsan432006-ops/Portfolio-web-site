@@ -8,32 +8,23 @@ service cloud.firestore {
       allow read, write: if false;
     }
 
-    // Helpers
+    // --- Security Architecture ---
     function isSignedIn() { return request.auth != null; }
     function isOwner() { 
       return isSignedIn() 
-        && request.auth.uid == 'pSVuaI9AyyOP6ojELMRRaw4yPIr1'
         && request.auth.token.email == 'dharsan432006@gmail.com';
     }
     function incoming() { return request.resource.data; }
     function existing() { return resource.data; }
     function isValidId(id) { return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$'); }
-    
-    // --- Profile ---
-    match /config/profile {
+
+    // --- Profile & Config ---
+    match /config/{document} {
       allow read: if true;
-      allow write: if isOwner() && isValidProfile(incoming());
+      allow write: if isOwner();
     }
 
-    function isValidProfile(data) {
-      return data.keys().hasAll(['name', 'role', 'photo', 'summary']) 
-        && data.name is string && data.name.size() <= 200
-        && data.role is string && data.role.size() <= 200
-        && data.photo is string && data.photo.size() <= 5000000
-        && data.summary is string && data.summary.size() <= 10000;
-    }
-
-    // --- Projects ---
+    // --- Core Collections ---
     match /projects/{projectId} {
       allow read: if true;
       allow create: if isOwner() && isValidId(projectId) && isValidProject(incoming());
@@ -41,6 +32,32 @@ service cloud.firestore {
       allow delete: if isOwner();
     }
 
+    match /skills/{skillId} {
+      allow read: if true;
+      allow write: if isOwner();
+    }
+
+    match /experience/{id} {
+      allow read: if true;
+      allow write: if isOwner();
+    }
+
+    match /education/{id} {
+      allow read: if true;
+      allow write: if isOwner();
+    }
+
+    match /achievements/{id} {
+      allow read: if true;
+      allow write: if isOwner();
+    }
+
+    match /testimonials/{id} {
+      allow read: if true;
+      allow write: if isOwner();
+    }
+
+    // --- Validation Blueprints ---
     function isValidProject(data) {
       return data.keys().hasAll(['id', 'title', 'description', 'tech', 'category', 'images', 'codeSnippet', 'github', 'demo', 'order'])
         && data.id is string && data.id.size() <= 128
@@ -49,49 +66,10 @@ service cloud.firestore {
         && data.tech is list && data.tech.size() <= 50
         && data.category is string && data.category.size() <= 100
         && data.images is list && data.images.size() <= 20
-        && (data.images.size() == 0 || (data.images[0] is string && data.images[0].size() <= 5000000))
         && data.codeSnippet is string && data.codeSnippet.size() <= 50000
         && data.github is string && data.github.size() <= 1000
         && data.demo is string && data.demo.size() <= 1000
-        && data.order is number
-        && (!('tags' in data) || (data.tags is list && data.tags.size() <= 20))
-        && (!('videoUrl' in data) || (data.videoUrl is string && data.videoUrl.size() <= 1000));
-    }
-
-    // --- Skills ---
-    match /skills/{skillId} {
-      allow read: if true;
-      allow write: if isOwner();
-    }
-
-    // --- Experience ---
-    match /experience/{id} {
-      allow read: if true;
-      allow write: if isOwner();
-    }
-
-    // --- Education ---
-    match /education/{id} {
-      allow read: if true;
-      allow write: if isOwner();
-    }
-
-    // --- Achievements ---
-    match /achievements/{id} {
-      allow read: if true;
-      allow write: if isOwner();
-    }
-
-    // --- Testimonials ---
-    match /testimonials/{id} {
-      allow read: if true;
-      allow write: if isOwner();
-    }
-
-    // --- Goals ---
-    match /config/goals {
-      allow read: if true;
-      allow write: if isOwner();
+        && data.order is number;
     }
   }
 }

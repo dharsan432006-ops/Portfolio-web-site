@@ -25,9 +25,11 @@
         "github": { "type": "string" },
         "demo": { "type": "string" },
         "category": { "type": "string" },
+        "categories": { "type": "array", "items": { "type": "string" } },
         "images": { "type": "array", "items": { "type": "string" } },
         "codeSnippet": { "type": "string" },
-        "order": { "type": "number" }
+        "order": { "type": "number" },
+        "createdAt": { "type": "number" }
       },
       "required": ["id", "title", "description", "tech", "category"]
     },

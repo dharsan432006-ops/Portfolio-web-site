@@ -4,7 +4,7 @@ import {
   getFirestore, doc, getDoc, setDoc, collection, 
   getDocs, query, orderBy, deleteDoc, onSnapshot 
 } from 'firebase/firestore';
-import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { getStorage, ref, uploadBytes, getDownloadURL, uploadBytesResumable } from 'firebase/storage';
 import firebaseConfig from '../../firebase-applet-config.json';
 
 const app = initializeApp(firebaseConfig);
@@ -60,6 +60,29 @@ export const uploadImage = async (file: File, folder: string = 'projects') => {
     console.error("Storage Error:", error);
     throw error;
   }
+};
+
+export const uploadImageWithProgress = (file: File, onProgress: (progress: number) => void, folder: string = 'projects'): Promise<string> => {
+  const filename = `${Date.now()}-${file.name.replace(/[^a-zA-Z0-9.]/g, '_')}`;
+  const storageRef = ref(storage, `${folder}/${filename}`);
+  const uploadTask = uploadBytesResumable(storageRef, file);
+
+  return new Promise((resolve, reject) => {
+    uploadTask.on('state_changed', 
+      (snapshot) => {
+        const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+        onProgress(progress);
+      },
+      (error) => {
+        console.error("Storage Error:", error);
+        reject(error);
+      },
+      async () => {
+        const url = await getDownloadURL(uploadTask.snapshot.ref);
+        resolve(url);
+      }
+    );
+  });
 };
 
 // Auth Service
